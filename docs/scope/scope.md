@@ -16,7 +16,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
 | 1 | Stack & architecture | Foundation | done |
-| 2 | Coding standards & tooling | Foundation | in-progress |
+| 2 | Coding standards & tooling | Foundation | done |
 | 3 | Data model | Foundation | planned |
 | 4 | API contract (OpenAPI) | Foundation | planned |
 | 5 | Authentication | Foundation | planned |
@@ -30,7 +30,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 13 | Recommendations | Journey 3: E-store Home | planned |
 | 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
 | 15 | Git branch and pull request | Submission | planned |
-| 16 | Capstone report and submission | Submission | planned |
+| 16 | Walkthrough video, report and submission | Submission | planned |
 
 ## Foundations
 
@@ -42,11 +42,11 @@ spec [0001](../specs/0001-stack-architecture/index.md) · code in `src/`, `pom.x
 - [x] Scaffold from the decision: `/develop stack & architecture`
 - [x] Verify it: `/check verify stack & architecture` (skipped: you marked it done after `mvn clean install` passed and `mvn spring-boot:run` started against PostgreSQL 16.15)
 
-### 2. Coding standards & tooling · in-progress
+### 2. Coding standards & tooling · done
 Records the project conventions in `AGENTS.md` from the real scaffold, then adds the light tooling (formatting, `.gitignore` for local properties).
 **Done when:** root `AGENTS.md` reflects the real stack, and the build runs clean with no secrets tracked.
 - [x] Capture conventions + tooling choices: `/audit`
-- [ ] Install the tooling (GitHub Actions build on push and PR): `/develop tooling`
+- [x] Install the tooling: skipped (no formatter, no hooks, and CI is not a capstone deliverable)
 
 ### 3. Data model · needs a decision
 Trims the draft in `docs/data-model.md` to the MVP (drops wishlist, reviews and coupons) and settles its open questions: category vs tags, formats, gift point rates, one or two step payment, and the order totals are calculated in.
@@ -121,10 +121,12 @@ A personal GitHub repo with the work on `feature/api-implementation` and a pull 
 **Done when:** the PR is open against `main` with the endpoint list, run steps and a link to the OpenAPI file.
 - [ ] Write the PR: `/document pr`
 
-### 16. Capstone report and submission
-`Capstone-Report.pdf` (5 to 8 pages): the AI workflow step by step with screenshots from Claude Code sessions, the API design, proof that it runs, test results and the repo structure. Plus the 4 to 6 sentence summary and the repo and PR links for the text field. `docs/ai-usage-log.md` is kept current at every step and is the source for the report.
-**Done when:** the PDF and the text are ready, and the screenshots in `docs/screenshots/` cover the IDE sessions, the app starting, Insomnia calls, database rows and `mvn test`.
-- [ ] Assemble the report from the AI usage log and screenshots
+### 16. Walkthrough video, report and submission
+The required deliverable is a short video (about 3 minutes) explaining the steps taken with the agentic IDE, submitted with the GitHub repo link (slide 12 and the AI review page). An optional `Capstone-Report.pdf` (5 to 8 pages) can be attached as backup: the AI workflow with screenshots, the API design, proof that it runs and test results. `docs/ai-usage-log.md` is kept current at every step and is the script source.
+**Done when:** the video is recorded and shows the AI workflow, the OpenAPI spec, the app starting, Insomnia calls, database rows and `mvn test`; the repo and PR links plus a 4 to 6 sentence summary are ready for the text field; screenshots in `docs/screenshots/` back it up.
+- [ ] Write the video script from the AI usage log
+- [ ] Record the video (about 3 minutes)
+- [ ] Optional: assemble `Capstone-Report.pdf`
 
 ## Deferred
 Outside the 12 journeys, kept so the plan stays honest. Any of them can come back as a later release.

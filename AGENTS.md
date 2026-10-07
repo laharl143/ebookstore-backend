@@ -47,7 +47,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`. Spec 0001 is 
 - Formatting and linting: minimal for now (IDE default formatting, no formatter plugin).
 - Pre-commit hooks: none. Run `mvn clean install` before pushing.
 - Testing: verification is manual by default (`/check verify` plus the Insomnia collection). Features tagged `· Beta` in the scope also get a `/test` pass (JUnit 5, `@WebMvcTest` + MockMvc, plain service tests). `mvn clean install` must stay green.
-- CI: one GitHub Actions workflow running `./mvnw -B verify` on push and pull request (installed by `/develop tooling`).
+- CI: none (not required by the capstone deliverables; skipped).
 
 ## Git
 
