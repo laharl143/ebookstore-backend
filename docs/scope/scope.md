@@ -16,7 +16,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
 | 1 | Stack & architecture | Foundation | done |
-| 2 | Coding standards & tooling | Foundation | planned |
+| 2 | Coding standards & tooling | Foundation | in-progress |
 | 3 | Data model | Foundation | planned |
 | 4 | API contract (OpenAPI) | Foundation | planned |
 | 5 | Authentication | Foundation | planned |
@@ -42,10 +42,11 @@ spec [0001](../specs/0001-stack-architecture/index.md) · code in `src/`, `pom.x
 - [x] Scaffold from the decision: `/develop stack & architecture`
 - [x] Verify it: `/check verify stack & architecture` (skipped: you marked it done after `mvn clean install` passed and `mvn spring-boot:run` started against PostgreSQL 16.15)
 
-### 2. Coding standards & tooling
+### 2. Coding standards & tooling · in-progress
 Records the project conventions in `AGENTS.md` from the real scaffold, then adds the light tooling (formatting, `.gitignore` for local properties).
 **Done when:** root `AGENTS.md` reflects the real stack, and the build runs clean with no secrets tracked.
-- [ ] Capture conventions + tooling choices: `/audit`
+- [x] Capture conventions + tooling choices: `/audit`
+- [ ] Install the tooling (GitHub Actions build on push and PR): `/develop tooling`
 
 ### 3. Data model · needs a decision
 Trims the draft in `docs/data-model.md` to the MVP (drops wishlist, reviews and coupons) and settles its open questions: category vs tags, formats, gift point rates, one or two step payment, and the order totals are calculated in.

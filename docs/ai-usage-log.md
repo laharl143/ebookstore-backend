@@ -76,3 +76,23 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Follow up in the main session:** PostgreSQL needed the `postgres` admin password, which only I have, so the AI generated a local password for `bookworm_app`, wrote it to the gitignored `application-local.properties` and `local-db-setup.sql`, and opened psql in a terminal tab where I typed the admin password. `CREATE ROLE` and `CREATE DATABASE` succeeded, and `mvn spring-boot:run` then connected to PostgreSQL 16.15 and logged `Started EbookstoreApplication in 8.896 seconds` on port 8080.
 
 **Review / changes by me:** _pending (decision log in spec 0001 still to review)_
+
+---
+
+## 4. Coding standards (`/audit`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Ran `/audit` after the scaffold. The skill asked coding standard and tooling questions as option panels, ran a tool discovery subagent (Haiku) to search for Agent Skills and MCP servers, then wrote the context files.
+
+**AI output:** root `AGENTS.md` (stack from spec 0001, Journey build approach, commands, rules, tooling, git) and a `CLAUDE.md` pointer. Installed one Agent Skill, `java-springboot` from `github/awesome-copilot`, into `.claude/skills/` (the normal install timed out on the large repo, so the AI sparse cloned just that folder and installed from it). Scope feature 2 now has a `/develop tooling` step for the CI workflow.
+
+**My decisions:**
+- SOLID OOP style; consistent error handling, conventional commits and consistent naming as rules (all recommended).
+- Minimal formatting (no plugin) and no pre commit hooks (recommended).
+- Testing: manual verify by default (I chose this over the recommended unit plus integration). Beta tagged features still get `/test`.
+- Basic GitHub Actions build on push and PR (recommended).
+- Git integration on, commit at the end of each build (I chose this over per milestone).
+- Agent Skills: only `java-springboot`; no MCP server.
+
+**Review / changes by me:** _pending_
