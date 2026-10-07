@@ -17,7 +17,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 |---|---------|-------|--------|
 | 1 | Stack & architecture | Foundation | done |
 | 2 | Coding standards & tooling | Foundation | done |
-| 3 | Data model | Foundation | planned |
+| 3 | Data model | Foundation | in-progress |
 | 4 | API contract (OpenAPI) | Foundation | planned |
 | 5 | Authentication | Foundation | planned |
 | 6 | Browse the catalogue | Journey 1: Catalogue | planned |
@@ -48,10 +48,17 @@ Records the project conventions in `AGENTS.md` from the real scaffold, then adds
 - [x] Capture conventions + tooling choices: `/audit`
 - [x] Install the tooling: skipped (no formatter, no hooks, and CI is not a capstone deliverable)
 
-### 3. Data model · needs a decision
+### 3. Data model · in-progress
 Trims the draft in `docs/data-model.md` to the MVP (drops wishlist, reviews and coupons) and settles its open questions: category vs tags, formats, gift point rates, one or two step payment, and the order totals are calculated in.
 **Done when:** the ERD and table list match the MVP and every open question has an answer, and the schema plus seed data (categories, authors, publishers, about 20 books) load into PostgreSQL.
-- [ ] Design it (spec): `/architect data model`
+spec [0002](../specs/0002-data-model/index.md)
+- [x] Design it (spec): `/architect data model`
+- [ ] Build it: `/develop data model`
+   - [ ] Schema migration V1: 13 tables, named constraints, sequence, indexes (AC-1, AC-2, AC-4, AC-6)
+   - [ ] Seed catalogue V2: 19 categories, 10 genres, authors, publishers, 24+ books in pesos (AC-3)
+   - [ ] Entities, repositories, `app.*` config and Clock bean (AC-5, AC-6)
+   - [ ] Tests on H2, run on PostgreSQL, final ERD in `docs/data-model.md` (AC-1 to AC-7)
+- [ ] Verify it: `/check verify data model`
 
 ### 4. API contract (OpenAPI) · needs a decision
 API first: write `src/main/resources/openapi.yaml` before the code, with one endpoint group per journey step, request and response schemas, the error format and JWT security. The code must match it.

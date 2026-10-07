@@ -96,3 +96,17 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Agent Skills: only `java-springboot`; no MCP server.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 5. Data model design (`/architect data model`, my manual design step)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Ran `/architect data model`. The AI asked the open design questions one at a time as option panels, each with a recommended answer. I answered rounds 1 to 3 myself, then asked it to pick the recommended option for the rest of the run.
+
+**My decisions:** one category plus many genre tags; one book row per format; one author per book; brands = authors and publishers; two step checkout then payment; VAT on the subtotal, then points; **Philippine pesos** (my change: the wireframes use rupees); 1 point per ₱100, 1 point = ₱1, earned on payment; **Philippine address format** (4 digit ZIP, +63, province); 12% VAT; delivery in 5 days (eBook same day); statuses PENDING_PAYMENT, CONFIRMED, SHIPPED, DELIVERED, CANCELLED; stock reserved at order; basket keyed by user; bigint ids.
+
+**AI output:** spec `docs/specs/0002-data-model/` (`index.md` build spec with the ERD, 13 tables, value sourcing, invariants, build plan; `rationale.md` with options, a 35 row decision log and the cross check). A read only cross check on a second model (Sonnet) found 21 gaps, including SQL types that would fail on H2, seed ids that would break identity counters, and races on stock and points. All recommended fixes were applied (auto picked). The AI also corrected its own draft from 20 to the 19 real wireframe categories instead of inventing one. Scope feature 3 now has build milestones.
+
+**Review / changes by me:** _pending (auto picked rows 14 and 17 to 35 in the decision log still to review)_
