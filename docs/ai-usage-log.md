@@ -220,3 +220,21 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Maintained RFC 9457 Problem response format on authentication failures via `ProblemAuthenticationEntryPoint`.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 12. Authentication completion and status sync
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Synchronized the project scope and spec status marking Feature 5 (Authentication) as done after complete test coverage and verification.
+
+**AI output:**
+- Updated `docs/scope/scope.md` setting Feature 5 status to `done` across the summary table and feature section.
+- Verified spec 0004 status is `Accepted`.
+- All 70 tests passing via `mvn clean install`.
+
+**Decisions / choices to review:**
+- Scope and spec states fully reconciled. Ready to begin Journey 1 (Feature 6: Browse the catalogue).
+
+**Review / changes by me:** _pending_
