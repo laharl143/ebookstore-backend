@@ -15,7 +15,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
-| 1 | Stack & architecture | Foundation | in-progress |
+| 1 | Stack & architecture | Foundation | done |
 | 2 | Coding standards & tooling | Foundation | planned |
 | 3 | Data model | Foundation | planned |
 | 4 | API contract (OpenAPI) | Foundation | planned |
@@ -34,13 +34,13 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 
 ## Foundations
 
-### 1. Stack & architecture
+### 1. Stack & architecture · done
 The brief fixes Java 17, Spring Boot 3, Maven and PostgreSQL. This decides the rest: package layout (controller, service, repository, DTO), how migrations and seed data run, how JWT is issued, and what database the tests use. Then it scaffolds a project that boots.
 **Done when:** the choices are recorded in a spec, and `mvn clean install` and `mvn spring-boot:run` succeed on an empty app with DB credentials read from environment variables (nothing secret in git).
 spec [0001](../specs/0001-stack-architecture/index.md) · code in `src/`, `pom.xml`
 - [x] Decide the stack (spec): `/architect stack & architecture`
 - [x] Scaffold from the decision: `/develop stack & architecture`
-- [ ] Verify it: `/check verify stack & architecture`
+- [x] Verify it: `/check verify stack & architecture` (skipped: you marked it done after `mvn clean install` passed and `mvn spring-boot:run` started against PostgreSQL 16.15)
 
 ### 2. Coding standards & tooling
 Records the project conventions in `AGENTS.md` from the real scaffold, then adds the light tooling (formatting, `.gitignore` for local properties).
