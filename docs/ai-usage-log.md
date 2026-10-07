@@ -42,3 +42,37 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Build approach = Journey (accepted the recommendation).
 - Workflow = Alpha (I chose this over the AI's Beta recommendation). The AI tagged auth, checkout,
   payment and cancel as Beta so they still get tests.
+
+---
+
+## 3. Stack & architecture (architect + develop, run by a Claude Code subagent)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** I asked the main Claude Code session to spawn a subagent that runs `/architect stack & architecture` and then `/develop stack & architecture` for scope feature 1, choosing the recommended option at every decision because I was not available to answer questions.
+
+**AI output:**
+- Environment check: IBM Semeru OpenJDK 17.0.7, Maven 3.9.4, PostgreSQL 16.15 running as the Windows service `postgresql-x64-16` on port 5432 (`psql` not on PATH), Docker not installed.
+- Version check against Maven Central: newest Spring Boot 3.x is 3.5.16 (its free support ended 2026-06-30; 4.x is outside the brief's 3.x rule).
+- Spec `docs/specs/0001-stack-architecture/` (`index.md`, `rationale.md`, `verify.md`), status In Progress, with a 25 row decision log of every auto picked option. A read only cross check on a second model (Sonnet) found 20 gaps and 8 soundness notes; the recommended fixes were applied (datasource wiring, H2 test config, `bookworm_app` role, migration numbering, JWT encoder and decoder beans).
+- Scaffold: `pom.xml` (web, validation, data JPA, Flyway, PostgreSQL driver, test, H2), Maven wrapper (`mvnw`, `mvnw.cmd`, `.mvn/`), `EbookstoreApplication`, `GlobalExceptionHandler` (ProblemDetail errors) and `ResourceNotFoundException`, `application.properties` reading `DB_URL` / `DB_USERNAME` / `DB_PASSWORD`, a test `application.properties` on H2, `application-local.properties.example` with placeholders only, and one context load test.
+- `mvn clean install`: BUILD SUCCESS, 1 test, 0 failures. `mvn spring-boot:run` without credentials stops with `password authentication failed for user "${DB_USERNAME}"`; a successful run against PostgreSQL was not done because the AI has no database password.
+- Scope feature 1: decision box and scaffold box ticked, spec linked, status in-progress; `Verify it` left open.
+
+**Decisions auto-picked (recommended):**
+- Layered monolith, package by layer under `com.bookworm.ebookstore`.
+- Spring Boot 3.5.16, Maven plus a committed Maven wrapper, `application.properties`.
+- Credentials from env vars, plus an optional gitignored `application-local.properties`; database `bookworm` owned by a dedicated `bookworm_app` role.
+- Flyway migrations, Hibernate `ddl-auto=validate`, seed data as a Flyway migration (feature 3).
+- Tests on H2 in PostgreSQL mode (Docker missing), `@WebMvcTest` slices plus one `@SpringBootTest` smoke test.
+- JWT (feature 5) through Spring Security's OAuth2 resource server, HS256 with `JWT_SECRET`, 60 minutes, no refresh token, BCrypt for passwords.
+- RFC 9457 ProblemDetail errors, Java record DTOs, no Lombok, hand written mappers.
+- Hand written `openapi.yaml` served by springdoc, no code generation (feature 4).
+- Default console logging, no Actuator; local hosting only.
+- References with web verified links; cross check on another model; apply its recommended fixes; save verify steps to `verify.md`.
+- Agent Skills / MCP search: recommended "find them" was not run, because it downloads and runs a third party package and nothing could be installed without my pick; recorded as a follow up.
+- Spec acceptance was auto accepted under my "pick recommended" instruction; I still need to review the decision log.
+
+**Follow up in the main session:** PostgreSQL needed the `postgres` admin password, which only I have, so the AI generated a local password for `bookworm_app`, wrote it to the gitignored `application-local.properties` and `local-db-setup.sql`, and opened psql in a terminal tab where I typed the admin password. `CREATE ROLE` and `CREATE DATABASE` succeeded, and `mvn spring-boot:run` then connected to PostgreSQL 16.15 and logged `Started EbookstoreApplication in 8.896 seconds` on port 8080.
+
+**Review / changes by me:** _pending (decision log in spec 0001 still to review)_

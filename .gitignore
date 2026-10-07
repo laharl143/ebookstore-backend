@@ -25,3 +25,6 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Local database setup script (contains the local app password)
+local-db-setup.sql

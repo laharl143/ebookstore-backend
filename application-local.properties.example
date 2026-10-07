@@ -1,0 +1,8 @@
+# Copy this file to application-local.properties (same folder, the project root).
+# application-local.properties is gitignored, so your real password never reaches git.
+# Uncomment the lines you need and replace the placeholders.
+# Environment variables (DB_URL, DB_USERNAME, DB_PASSWORD) work too and need no file.
+
+# spring.datasource.url=jdbc:postgresql://localhost:5432/bookworm
+# spring.datasource.username=bookworm_app
+# spring.datasource.password=<your password>
