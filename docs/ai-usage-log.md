@@ -262,3 +262,20 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Implemented `Book.genres` in-memory filtering and sorting for related books, which is robust, clean, and perfectly suited for the MVP's tiny database size.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 14. Catalogue browsing status sync
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Synchronized the project scope status, marking Feature 6 (Browse the catalogue) as done.
+
+**AI output:**
+- Updated `docs/scope/scope.md` summary table and feature section, transitioning Feature 6 status from `in-progress` to `done`.
+- Verified that all 91 tests remain fully functional and green.
+
+**Decisions / choices to review:**
+- Reconciled scope states. Ready to begin Feature 7 (Book detail).
+
+**Review / changes by me:** _pending_
