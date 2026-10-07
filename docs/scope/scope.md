@@ -6,7 +6,7 @@ A Spring Boot and PostgreSQL REST API for an online bookstore where customers br
 **Workflow:** Alpha (after `/develop`, run `/check verify` on the real app). A few risky features carry `· Beta` so they also get a `/test` pass, because a passing `mvn test` is part of the evidence. `/architect` is the recommended first stop for a feature with a real decision, but you can skip it when you already know the build.
 
 **MVP boundary:** the 12 customer journeys on the use case slide, each built thin. Everything else waits in Deferred.
-**Agentic tool:** Claude Code only (no IBM Bob or Kiro access). The AI usage log and the report say so plainly.
+**Agentic tool:** Claude Code for features 1 to 4 design, then IBM Bob as well (from 2026-10-07; workflow in `.bob/`). Kiro is not used. The AI usage log names the tool on every entry, and the report says so plainly.
 **Deployability:** skipped (local run only, which the brief allows).
 
 _These are recommendations to keep your build orderly, not requirements. Skip anything that does not fit: if you already know how to build a feature, use `/develop` and skip `/architect`. You decide when a feature is `done`._

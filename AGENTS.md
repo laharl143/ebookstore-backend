@@ -62,6 +62,8 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`. Spec 0001 is 
 
 MCP servers: none (Postgres MCP offered, skipped for now).
 
+IBM Bob: the workflow lives in `.bob/rules/01-workflow.md` (loaded in every Bob mode, together with this file) and the commands `/architect`, `/develop`, `/verify`, `/sync` in `.bob/commands/`. They mirror the Claude Code workflow skills and write to the same scope, specs and AI usage log.
+
 ## Context files
 
 <!-- Nested AGENTS.md files are listed here as they are created -->

@@ -140,3 +140,15 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **AI choices to review:** resource style REST with `/payments`, `/cancel`, `/buy-again` subresources; 404 for other users' data; 402 for a declined payment; a per user row lock for checkout and basket writes; Swagger UI showing the hand written file while springdoc's generated docs stay on. The Agent Skill and MCP search was not run because it downloads a third party package.
 
 **Review / changes by me:** _pending (decision log rows 1 and 5 to 44 still to review)_
+
+---
+
+## 8. Bob workflow setup (Claude Code)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** I opened IBM Bob and asked Claude Code whether Bob could continue the work, and to set up a workflow inside Bob.
+
+**AI output:** Claude Code checked the Bob docs (rules in `.bob/rules/`, custom slash commands in `.bob/commands/`, `AGENTS.md` loaded automatically) and wrote `.bob/rules/01-workflow.md` plus four commands: `/architect`, `/develop`, `/verify`, `/sync`. They follow the same loop as the Claude Code skills: spec first, build from the Build plan, verify against the acceptance criteria, keep the scope and this log current. `AGENTS.md` and the scope now say IBM Bob is used too.
+
+**Review / changes by me:** _pending (try `/develop API contract` in Bob)_
