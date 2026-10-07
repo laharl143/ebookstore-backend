@@ -1,0 +1,27 @@
+# Build output
+target/
+build/
+
+# Local config and secrets (never commit DB credentials)
+application-local.properties
+application-local.yml
+src/main/resources/application-local.properties
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
