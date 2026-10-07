@@ -20,7 +20,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 3 | Data model | Foundation | done |
 | 4 | API contract (OpenAPI) | Foundation | done |
 | 5 | Authentication | Foundation | done |
-| 6 | Browse the catalogue | Journey 1: Catalogue | planned |
+| 6 | Browse the catalogue | Journey 1: Catalogue | in-progress |
 | 7 | Book detail | Journey 1: Catalogue | planned |
 | 8 | Basket | Journey 2: Payment & purchase | planned |
 | 9 | Checkout and order | Journey 2: Payment & purchase | planned |
@@ -87,10 +87,11 @@ spec [0004](../specs/0004-authentication/index.md) · code in `src/main/java/com
 
 ## Journey 1: Catalogue (slide steps 3, 5, 6, 7)
 
-### 6. Browse the catalogue
+### 6. Browse the catalogue · in-progress
 Public browsing: list categories, list books in a category, search by text with simple filters (language, format, price range, sort), and browse by brand (authors and publishers).
 **Done when:** each browse call returns paged books with the data a book card needs, including the estimated delivery date; an unknown category returns 404; an empty result returns an empty page, not an error.
-- [ ] Build it: `/develop browse the catalogue`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto}/`
+- [x] Build it: `/develop browse the catalogue`
 
 ### 7. Book detail
 One book with everything the product page shows (covers, author with bio, publisher, format, genre tags, price, stock, copies sold, delivery date) plus related books (same genre or author, excluding itself).

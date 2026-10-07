@@ -238,3 +238,27 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Scope and spec states fully reconciled. Ready to begin Journey 1 (Feature 6: Browse the catalogue).
 
 **Review / changes by me:** _pending_
+
+---
+
+## 13. Public catalogue browsing build (`/develop browse the catalogue`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Run `/develop browse the catalogue` in IBM Bob to build Catalogue browsing endpoints per spec 0003: categories list, books search and paging with wildcards and price ranges, book details with estimated delivery date and other formats, related books sorting by author and genre, and author/publisher details.
+
+**AI output:**
+- DTO records: Created CategoryResponse, AuthorSummary, AuthorResponse, PublisherSummary, PublisherResponse, OtherFormat, BookSummaryResponse, BookDetailResponse, and generic PageResponse under package `com.bookworm.ebookstore.dto`.
+- Mapping: Created utility `BookMapper` under package `com.bookworm.ebookstore.mapper` for handwritten, warning-free conversions. Implemented description cutting at 150 characters on spaces with `...` appending.
+- Exceptions: Added custom `ValidationException` and `BadRequestException` under `com.bookworm.ebookstore.exception`, with dedicated handlers in `GlobalExceptionHandler` mapping to RFC 9457 Problem bodies with error codes `VALIDATION_FAILED` and `MALFORMED_REQUEST`.
+- Repositories: Updated `BookRepository` and `CategoryRepository` to extend JPA Specification and custom query finders.
+- Services: Implemented `BookService` encapsulating specification search filtering (including escaping database wildcards `%`, `_`, `\` for `LIKE` query safely), estimated delivery date logic based on format, other formats sorting, and related books ranking comparator.
+- Controller: Created public endpoint handlers in `BookController` mapping parameters with Bean Validation and error checks.
+- Test suite: Added 13 integration tests in `BookServiceIntegrationTest` and 8 REST unit tests in `BookControllerTest` achieving complete green coverage. All 91 tests passed successfully.
+
+**Decisions / choices to review:**
+- Implemented `ValidationException` to carry key-value error maps from service cross-field checks (e.g. `minPrice > maxPrice`) directly to `GlobalExceptionHandler`.
+- Added custom `BadRequestException` to handle malformed query parameters like invalid format (e.g. `AUDIO`) or sorting (e.g. `foo`) and return a 400 `MALFORMED_REQUEST` response.
+- Implemented `Book.genres` in-memory filtering and sorting for related books, which is robust, clean, and perfectly suited for the MVP's tiny database size.
+
+**Review / changes by me:** _pending_
