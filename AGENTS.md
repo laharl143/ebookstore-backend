@@ -54,7 +54,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title/index.md`. Spec 0001 is 
 - integration: on
 - commit: end-of-build
 - branches: foundations (features 1 to 4) on `main`; the API work goes on `feature/api-implementation` (name required by the capstone), merged through one PR.
-- Pushes and PRs always ask first.
+- push: always (safe for this repo; commit and push without asking). Opening a PR still asks first.
 
 ## Agent skills
 
