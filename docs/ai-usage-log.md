@@ -176,3 +176,23 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending (run `/check verify API contract`)_
 
 **Update (feature completion):** Marked feature 4 (API contract) as `done` and accepted spec 0003 after complete test pass (54 tests).
+
+---
+
+## 10. Authentication architecture (`/architect authentication`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Run `/architect authentication` in IBM Bob to design customer registration, login, and JWT security for scope feature 5 based on spec 0001, spec 0002, and spec 0003.
+
+**AI output:**
+- Spec `docs/specs/0004-authentication/` (`index.md` and `rationale.md`), status Proposed, with 8 acceptance criteria.
+- Design covers Spring Security with OAuth2 Resource Server (Nimbus JOSE), HS256 JWT tokens with 60-minute expiry, `User` entity integration, RFC 9457 `ProblemDetail` authentication entry point, public vs protected routes, and email normalization.
+- Verified all acceptance criteria are covered by build plan steps and value sourcing mappings.
+- Scope feature 5 updated to `in-progress` with milestones and spec link.
+
+**My decisions / choices to review:**
+- Safe fallback default for JWT secret key in local configuration.
+- Spring Security OAuth2 resource server with symmetric HMAC-SHA256 tokens.
+
+**Review / changes by me:** _pending_

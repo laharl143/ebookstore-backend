@@ -19,7 +19,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Coding standards & tooling | Foundation | done |
 | 3 | Data model | Foundation | done |
 | 4 | API contract (OpenAPI) | Foundation | done |
-| 5 | Authentication | Foundation | planned |
+| 5 | Authentication | Foundation | in-progress |
 | 6 | Browse the catalogue | Journey 1: Catalogue | planned |
 | 7 | Book detail | Journey 1: Catalogue | planned |
 | 8 | Basket | Journey 2: Payment & purchase | planned |
@@ -72,10 +72,18 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/resources/
    - [x] Drift test and Swagger UI through springdoc (AC-3, AC-5)
 - [x] Verify it: `/check verify API contract` (skipped: you marked it done after `mvn clean install` passed with 54 tests and Swagger UI was verified)
 
-### 5. Authentication · needs a decision · Beta
+### 5. Authentication · in-progress · Beta
 Journey step 1: register and login. Passwords are hashed with BCrypt, login returns a JWT, and every customer endpoint requires it.
 **Done when:** a user can register and log in and gets a token; protected calls without a valid token return 401; wrong credentials and a duplicate email return clear errors.
-- [ ] Design it (spec): `/architect authentication`
+spec [0004](../specs/0004-authentication/index.md)
+- [x] Design it (spec): `/architect authentication`
+- [ ] Build it: `/develop authentication`
+   - [ ] Security dependencies, JWT encoder/decoder, and properties (AC-5, AC-7)
+   - [ ] Auth DTOs with validation and password masking (AC-1, AC-3, AC-8)
+   - [ ] UserRepository queries, AuthService, and AuthController (AC-1, AC-2, AC-3, AC-4)
+   - [ ] Spring Security filter chain, public matchers, and ProblemEntryPoint (AC-5, AC-6)
+- [ ] Verify it: `/check verify authentication`
+- [ ] Test it: `/test authentication`
 
 ## Journey 1: Catalogue (slide steps 3, 5, 6, 7)
 
