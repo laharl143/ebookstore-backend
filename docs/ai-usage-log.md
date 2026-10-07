@@ -126,3 +126,17 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **AI choices inside the spec:** the demo book list (public domain classics by real authors such as Rizal, Austen and Conan Doyle, plus fictional modern authors and fictional publishers so no real company is misrepresented); one extra CHECK, `ck_order_items_format`, so order line formats have an allowed list like book formats.
 
 **Review / changes by me:** _pending (run `/check verify data model`)_
+
+---
+
+## 7. API contract design (`/architect API contract`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** First marked the data model feature done (verification skipped by my choice). Then ran `/architect API contract`. I answered the first round (OpenAPI 3.0.3, money as decimal plus currency, UTC timestamps with local dates) and asked the AI to pick the recommended option for everything else.
+
+**AI output:** spec `docs/specs/0003-api-contract/` (`index.md` build spec with 8 acceptance criteria, 25 operations under `/api/v1` in 6 tags, request and response schemas, an error code catalog on `ProblemDetail`, value sourcing and a 6 step build plan; `rationale.md` with 3 options and a 44 row decision log). A read only cross check on a second model (Sonnet) found 18 decision gaps and 7 soundness issues; all recommended fixes were applied, two adjusted by the AI to fit AGENTS.md. Scope feature 4 now has build milestones and a Verify box.
+
+**AI choices to review:** resource style REST with `/payments`, `/cancel`, `/buy-again` subresources; 404 for other users' data; 402 for a declined payment; a per user row lock for checkout and basket writes; Swagger UI showing the hand written file while springdoc's generated docs stay on. The Agent Skill and MCP search was not run because it downloads a third party package.
+
+**Review / changes by me:** _pending (decision log rows 1 and 5 to 44 still to review)_

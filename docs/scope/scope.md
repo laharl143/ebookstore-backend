@@ -18,7 +18,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Stack & architecture | Foundation | done |
 | 2 | Coding standards & tooling | Foundation | done |
 | 3 | Data model | Foundation | done |
-| 4 | API contract (OpenAPI) | Foundation | planned |
+| 4 | API contract (OpenAPI) | Foundation | in-progress |
 | 5 | Authentication | Foundation | planned |
 | 6 | Browse the catalogue | Journey 1: Catalogue | planned |
 | 7 | Book detail | Journey 1: Catalogue | planned |
@@ -60,10 +60,17 @@ spec [0002](../specs/0002-data-model/index.md) · code in `src/main/resources/db
    - [x] Tests on H2, run on PostgreSQL, final ERD in `docs/data-model.md` (AC-1 to AC-7)
 - [x] Verify it: `/check verify data model` (skipped: you marked it done after `mvn clean install` passed with 40 tests and `mvn spring-boot:run` applied both migrations on PostgreSQL 16.15)
 
-### 4. API contract (OpenAPI) · needs a decision
+### 4. API contract (OpenAPI) · in-progress
 API first: write `src/main/resources/openapi.yaml` before the code, with one endpoint group per journey step, request and response schemas, the error format and JWT security. The code must match it.
 **Done when:** the spec validates, covers all 12 journey steps, and the endpoint list can go straight into the README.
-- [ ] Design it (spec): `/architect API contract`
+spec [0003](../specs/0003-api-contract/index.md)
+- [x] Design it (spec): `/architect API contract`
+- [ ] Build it: `/develop API contract`
+   - [ ] Write `openapi.yaml`: 25 operations, schemas, Problem and error codes, shared conventions (AC-2, AC-4, AC-6, AC-7, AC-8)
+   - [ ] Contract tests: swagger-parser validity, operation, paging and sensitive field checks (AC-1, AC-2, AC-6, AC-8)
+   - [ ] Error codes: `ApiErrorCode` and `GlobalExceptionHandler` mapping with tests (AC-4)
+   - [ ] Drift test and Swagger UI through springdoc (AC-3, AC-5)
+- [ ] Verify it: `/check verify API contract`
 
 ### 5. Authentication · needs a decision · Beta
 Journey step 1: register and login. Passwords are hashed with BCrypt, login returns a JWT, and every customer endpoint requires it.
@@ -145,6 +152,7 @@ Outside the 12 journeys, kept so the plan stays honest. Any of them can come bac
 - **Guest users, store and catalogue admin** (architecture slide)
 - **Shipping, shipment tracking and returns** (architecture slide)
 - **Deployability** (Dockerfile and docker compose, or ROKS)
+- **Reverse contract drift check** (every operation in `openapi.yaml` has a handler; from spec 0003)
 
 ## Legend
 
