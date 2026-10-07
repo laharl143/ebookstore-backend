@@ -1,7 +1,7 @@
 # 0003. REST API contract for the Book Worm store
 
 **Date**: 2026-10-07
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

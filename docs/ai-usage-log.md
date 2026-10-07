@@ -152,3 +152,27 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **AI output:** Claude Code checked the Bob docs (rules in `.bob/rules/`, custom slash commands in `.bob/commands/`, `AGENTS.md` loaded automatically) and wrote `.bob/rules/01-workflow.md` plus four commands: `/architect`, `/develop`, `/verify`, `/sync`. They follow the same loop as the Claude Code skills: spec first, build from the Build plan, verify against the acceptance criteria, keep the scope and this log current. `AGENTS.md` and the scope now say IBM Bob is used too.
 
 **Review / changes by me:** _pending (try `/develop API contract` in Bob)_
+
+---
+
+## 9. API contract build (`/develop API contract`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Run `/develop API contract` in IBM Bob to build spec 0003: write the complete OpenAPI 3.0.3 specification file, configure springdoc and Swagger UI, implement API error codes and exception handling, and add contract validation tests.
+
+**AI output:**
+- Hand-written OpenAPI contract at `src/main/resources/openapi.yaml` describing 25 operations across 6 tags (`Auth`, `Account`, `Catalogue`, `Cart`, `Orders`, `Payments`) with schema components, explicit security requirements, pagination metadata, and RFC 9457 `Problem` error definitions.
+- `src/main/java/com/bookworm/ebookstore/exception/ApiErrorCode.java` defining standard machine-readable error codes with HTTP status mapping.
+- Enhanced `GlobalExceptionHandler` mapping Bean Validation, parameter violations, type mismatches, missing parameters, unreadable bodies, 404 resource errors, and database constraint violations to `application/problem+json` with error codes.
+- `OpenApiContractController` and `OpenApiConfig` with springdoc properties to serve the hand-written contract at `/openapi.yaml` and interactive docs at `/swagger-ui.html`.
+- Test suite with 4 new test classes verifying the contract: `OpenApiContractTest` (AC-1, AC-2, AC-6, AC-8), `ApiErrorCodeContractTest` (AC-4), `GlobalExceptionHandlerTest` (AC-4), `ContractDriftTest` (AC-5), and `SwaggerUiIntegrationTest` (AC-3).
+- `mvn clean install` passes with all 54 tests green.
+
+**Decisions / choices to review:**
+- Served `/openapi.yaml` via a dedicated lightweight controller endpoint to guarantee exact content delivery and avoid classpath resource path conflicts in Spring Boot 3.5.
+- Springdoc UI configured to load `/openapi.yaml` with public endpoints accessible without authentication.
+
+**Review / changes by me:** _pending (run `/check verify API contract`)_
+
+**Update (feature completion):** Marked feature 4 (API contract) as `done` and accepted spec 0003 after complete test pass (54 tests).

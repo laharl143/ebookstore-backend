@@ -1,0 +1,1786 @@
+openapi: 3.0.3
+info:
+  title: Book Worm API
+  description: REST API for the Book Worm online e-bookstore.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+tags:
+  - name: Auth
+    description: Registration and authentication
+  - name: Account
+    description: User profile, addresses, and personalized recommendations
+  - name: Catalogue
+    description: Categories, books, authors, and publishers browsing
+  - name: Cart
+    description: Shopping basket management
+  - name: Orders
+    description: Order placement, history, cancellation, and Buy It Again
+  - name: Payments
+    description: Simulated payment processing
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register a new customer account
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate with email and password
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/me:
+    get:
+      tags:
+        - Account
+      summary: Get the current user profile and gift points balance
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/me/addresses:
+    get:
+      tags:
+        - Account
+      summary: List saved delivery addresses
+      operationId: getAddresses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saved delivery addresses, default address first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Account
+      summary: Save a new delivery address
+      operationId: createAddress
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
+      responses:
+        '201':
+          description: Address saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/me/recommendations:
+    get:
+      tags:
+        - Account
+      summary: Get personalized book recommendations based on order history
+      operationId: getRecommendations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: size
+          in: query
+          description: Maximum number of recommendations to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 12
+      responses:
+        '200':
+          description: Recommended books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookSummaryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/categories:
+    get:
+      tags:
+        - Catalogue
+      summary: List all catalogue categories
+      operationId: getCategories
+      security: []
+      responses:
+        '200':
+          description: All catalogue categories in sidebar order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/books:
+    get:
+      tags:
+        - Catalogue
+      summary: Search and filter books with pagination
+      operationId: getBooks
+      security: []
+      parameters:
+        - name: q
+          in: query
+          description: Search term across title, author name, and publisher name
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: category
+          in: query
+          description: Category slug
+          required: false
+          schema:
+            type: string
+        - name: authorId
+          in: query
+          description: Author ID filter
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: publisherId
+          in: query
+          description: Publisher ID filter
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: language
+          in: query
+          description: Language filter
+          required: false
+          schema:
+            type: string
+        - name: format
+          in: query
+          description: Book format filter
+          required: false
+          schema:
+            type: string
+            enum: [PAPERBACK, HARDCOVER, EBOOK]
+        - name: minPrice
+          in: query
+          description: Minimum price filter (inclusive, 2 decimal places)
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: maxPrice
+          in: query
+          description: Maximum price filter (inclusive, 2 decimal places)
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: sort
+          in: query
+          description: Sorting criteria
+          required: false
+          schema:
+            type: string
+            enum: [relevance, price_asc, price_desc, newest, bestselling]
+            default: relevance
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/SizeQuery'
+      responses:
+        '200':
+          description: Paged list of book summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/books/{bookId}:
+    get:
+      tags:
+        - Catalogue
+      summary: Get detailed book information by ID
+      operationId: getBookById
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/BookIdPath'
+      responses:
+        '200':
+          description: Detailed book information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/books/{bookId}/related:
+    get:
+      tags:
+        - Catalogue
+      summary: Get related books for a given book
+      operationId: getRelatedBooks
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/BookIdPath'
+        - name: size
+          in: query
+          description: Maximum number of related books to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 8
+      responses:
+        '200':
+          description: List of related book summaries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BookSummaryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/authors:
+    get:
+      tags:
+        - Catalogue
+      summary: List authors with pagination
+      operationId: getAuthors
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/SizeQuery'
+      responses:
+        '200':
+          description: Paged list of authors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/authors/{authorId}:
+    get:
+      tags:
+        - Catalogue
+      summary: Get author details by ID
+      operationId: getAuthorById
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/AuthorIdPath'
+      responses:
+        '200':
+          description: Author details with biography
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/publishers:
+    get:
+      tags:
+        - Catalogue
+      summary: List publishers with pagination
+      operationId: getPublishers
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/SizeQuery'
+      responses:
+        '200':
+          description: Paged list of publishers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/publishers/{publisherId}:
+    get:
+      tags:
+        - Catalogue
+      summary: Get publisher details by ID
+      operationId: getPublisherById
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PublisherIdPath'
+      responses:
+        '200':
+          description: Publisher details with description
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/cart:
+    get:
+      tags:
+        - Cart
+      summary: Get the current user shopping basket with totals
+      operationId: getCart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Shopping basket details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - Cart
+      summary: Empty the shopping basket
+      operationId: clearCart
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Cart cleared successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/cart/items:
+    post:
+      tags:
+        - Cart
+      summary: Add a book to the shopping basket
+      operationId: addCartItem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCartItemRequest'
+      responses:
+        '200':
+          description: Updated shopping basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/cart/items/{bookId}:
+    put:
+      tags:
+        - Cart
+      summary: Update the quantity of a book in the shopping basket
+      operationId: updateCartItemQuantity
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCartItemRequest'
+      responses:
+        '200':
+          description: Updated shopping basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - Cart
+      summary: Remove a book from the shopping basket
+      operationId: removeCartItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookIdPath'
+      responses:
+        '200':
+          description: Updated shopping basket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/orders:
+    post:
+      tags:
+        - Orders
+      summary: Place an order from the shopping basket
+      operationId: createOrder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created successfully
+          headers:
+            Location:
+              description: URI of the newly created order
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - Orders
+      summary: List user order history with pagination
+      operationId: getOrders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Optional filter by order status
+          required: false
+          schema:
+            type: string
+            enum: [PENDING_PAYMENT, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+        - $ref: '#/components/parameters/PageQuery'
+        - $ref: '#/components/parameters/SizeQuery'
+      responses:
+        '200':
+          description: Paged list of orders, newest first
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: Get order details by ID
+      operationId: getOrderById
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderIdPath'
+      responses:
+        '200':
+          description: Detailed order information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/orders/{orderId}/payments:
+    post:
+      tags:
+        - Payments
+      summary: Process simulated payment for an order
+      operationId: processPayment
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '201':
+          description: Payment processed and purchase confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseConfirmationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '402':
+          description: Payment declined by simulated gateway
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/orders/{orderId}/cancel:
+    post:
+      tags:
+        - Orders
+      summary: Cancel an order within the allowed cancellation window
+      operationId: cancelOrder
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderIdPath'
+      responses:
+        '200':
+          description: Order cancelled and refunded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/orders/{orderId}/buy-again:
+    post:
+      tags:
+        - Orders
+      summary: Copy items from a past order into the shopping basket
+      operationId: buyAgain
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/OrderIdPath'
+      responses:
+        '200':
+          description: Items added to cart with summary of added and skipped items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuyAgainResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication with JWT
+
+  parameters:
+    PageQuery:
+      name: page
+      in: query
+      description: Zero-based page index
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    SizeQuery:
+      name: size
+      in: query
+      description: Page size
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 12
+    BookIdPath:
+      name: bookId
+      in: path
+      description: Book ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    AuthorIdPath:
+      name: authorId
+      in: path
+      description: Author ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    PublisherIdPath:
+      name: publisherId
+      in: path
+      description: Publisher ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+    OrderIdPath:
+      name: orderId
+      in: path
+      description: Order ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Bad request or validation failure
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Missing, invalid, or expired authentication token
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Resource not found or not owned by user
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: State conflict, empty cart, or insufficient stock
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalError:
+      description: Unexpected internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: User email address, normalized to lower case
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          writeOnly: true
+          description: Plain text password (at least 8 chars, max 72 bytes)
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        phone:
+          type: string
+          pattern: '^\+639\d{9}$'
+          description: Philippine mobile number (+639XXXXXXXXX)
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          writeOnly: true
+          description: Plain text password
+
+    AuthResponse:
+      type: object
+      required:
+        - accessToken
+        - tokenType
+        - expiresIn
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: Token expiration duration in seconds
+          example: 3600
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - giftPointsBalance
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        giftPointsBalance:
+          type: integer
+          description: Available gift points balance
+
+    AddressRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - streetAddress
+        - city
+        - province
+        - zipCode
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        phone:
+          type: string
+          pattern: '^\+639\d{9}$'
+        streetAddress:
+          type: string
+          minLength: 1
+          maxLength: 255
+        barangay:
+          type: string
+          maxLength: 100
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+        province:
+          type: string
+          minLength: 1
+          maxLength: 100
+        zipCode:
+          type: string
+          pattern: '^\d{4}$'
+          description: 4-digit Philippine postal code
+        country:
+          type: string
+          maxLength: 60
+          default: Philippines
+        isDefault:
+          type: boolean
+          default: false
+
+    AddressResponse:
+      type: object
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - phone
+        - streetAddress
+        - city
+        - province
+        - zipCode
+        - country
+        - isDefault
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        streetAddress:
+          type: string
+        barangay:
+          type: string
+          nullable: true
+        city:
+          type: string
+        province:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ShippingAddress:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - phone
+        - streetAddress
+        - city
+        - province
+        - zipCode
+        - country
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        streetAddress:
+          type: string
+        barangay:
+          type: string
+          nullable: true
+        city:
+          type: string
+        province:
+          type: string
+        zipCode:
+          type: string
+        country:
+          type: string
+
+    CategoryResponse:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        slug:
+          type: string
+
+    AuthorSummary:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    AuthorResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+
+    PublisherSummary:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+
+    PublisherResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    OtherFormat:
+      type: object
+      required:
+        - id
+        - format
+        - price
+      properties:
+        id:
+          type: integer
+          format: int64
+        format:
+          type: string
+          enum: [PAPERBACK, HARDCOVER, EBOOK]
+        price:
+          type: number
+          description: Price with 2 decimal places
+
+    BookSummaryResponse:
+      type: object
+      required:
+        - id
+        - title
+        - shortDescription
+        - format
+        - language
+        - price
+        - currency
+        - author
+        - publisher
+        - genres
+        - inStock
+        - estimatedDeliveryDate
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        shortDescription:
+          type: string
+        format:
+          type: string
+          enum: [PAPERBACK, HARDCOVER, EBOOK]
+        language:
+          type: string
+        price:
+          type: number
+          description: Price with 2 decimal places
+        currency:
+          type: string
+          example: PHP
+        frontCoverUrl:
+          type: string
+          nullable: true
+        author:
+          $ref: '#/components/schemas/AuthorSummary'
+        publisher:
+          $ref: '#/components/schemas/PublisherSummary'
+        genres:
+          type: array
+          items:
+            type: string
+        inStock:
+          type: boolean
+        estimatedDeliveryDate:
+          type: string
+          format: date
+
+    BookDetailResponse:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - format
+        - language
+        - price
+        - currency
+        - author
+        - publisher
+        - category
+        - genres
+        - copiesSold
+        - publishDate
+        - inStock
+        - estimatedDeliveryDate
+        - otherFormats
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        description:
+          type: string
+        format:
+          type: string
+          enum: [PAPERBACK, HARDCOVER, EBOOK]
+        language:
+          type: string
+        price:
+          type: number
+          description: Price with 2 decimal places
+        currency:
+          type: string
+          example: PHP
+        frontCoverUrl:
+          type: string
+          nullable: true
+        backCoverUrl:
+          type: string
+          nullable: true
+        author:
+          $ref: '#/components/schemas/AuthorResponse'
+        publisher:
+          $ref: '#/components/schemas/PublisherResponse'
+        category:
+          $ref: '#/components/schemas/CategoryResponse'
+        genres:
+          type: array
+          items:
+            type: string
+        stockQuantity:
+          type: integer
+          nullable: true
+          description: Available physical stock, null for eBooks
+        copiesSold:
+          type: integer
+        publishDate:
+          type: string
+          format: date
+        inStock:
+          type: boolean
+        estimatedDeliveryDate:
+          type: string
+          format: date
+        otherFormats:
+          type: array
+          items:
+            $ref: '#/components/schemas/OtherFormat'
+
+    AddCartItemRequest:
+      type: object
+      required:
+        - bookId
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+
+    UpdateCartItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+    CartItemResponse:
+      type: object
+      required:
+        - bookId
+        - title
+        - format
+        - authorName
+        - unitPrice
+        - quantity
+        - maxQuantity
+        - lineTotal
+        - inStock
+        - estimatedDeliveryDate
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        format:
+          type: string
+          enum: [PAPERBACK, HARDCOVER, EBOOK]
+        authorName:
+          type: string
+        frontCoverUrl:
+          type: string
+          nullable: true
+        unitPrice:
+          type: number
+          description: Unit price with 2 decimal places
+        quantity:
+          type: integer
+        maxQuantity:
+          type: integer
+          description: Maximum selectable quantity based on stock and format limit
+        lineTotal:
+          type: number
+          description: Line total with 2 decimal places
+        inStock:
+          type: boolean
+        estimatedDeliveryDate:
+          type: string
+          format: date
+
+    CartResponse:
+      type: object
+      required:
+        - items
+        - itemCount
+        - subtotal
+        - vatAmount
+        - deliveryCharge
+        - estimatedTotal
+        - currency
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+        itemCount:
+          type: integer
+        subtotal:
+          type: number
+          description: Subtotal with 2 decimal places
+        vatAmount:
+          type: number
+          description: VAT amount with 2 decimal places
+        deliveryCharge:
+          type: number
+          description: Delivery charge with 2 decimal places
+        estimatedTotal:
+          type: number
+          description: Estimated total with 2 decimal places
+        currency:
+          type: string
+          example: PHP
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        addressId:
+          type: integer
+          format: int64
+          description: Saved address ID (mutually exclusive with shippingAddress)
+        shippingAddress:
+          $ref: '#/components/schemas/AddressRequest'
+        saveAddress:
+          type: boolean
+          default: false
+        pointsToRedeem:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Gift points to redeem
+
+    OrderItemResponse:
+      type: object
+      required:
+        - bookId
+        - title
+        - format
+        - authorName
+        - unitPrice
+        - quantity
+        - lineTotal
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        format:
+          type: string
+          enum: [PAPERBACK, HARDCOVER, EBOOK]
+        authorName:
+          type: string
+        frontCoverUrl:
+          type: string
+          nullable: true
+        unitPrice:
+          type: number
+          description: Unit price with 2 decimal places
+        quantity:
+          type: integer
+        lineTotal:
+          type: number
+          description: Line total with 2 decimal places
+
+    PaymentResponse:
+      type: object
+      required:
+        - transactionId
+        - method
+        - status
+        - amount
+        - currency
+        - createdAt
+      properties:
+        transactionId:
+          type: string
+        method:
+          type: string
+          enum: [CREDIT_CARD, DEBIT_CARD, E_WALLET]
+        status:
+          type: string
+          enum: [SUCCESS, FAILED, REFUNDED]
+        amount:
+          type: number
+          description: Payment amount with 2 decimal places
+        currency:
+          type: string
+          example: PHP
+        cardLast4:
+          type: string
+          nullable: true
+          description: Last 4 digits of payment card
+        failureReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        refundedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    OrderResponse:
+      type: object
+      required:
+        - id
+        - orderNumber
+        - status
+        - items
+        - shippingAddress
+        - subtotal
+        - vatRate
+        - vatAmount
+        - deliveryCharge
+        - giftPointsRedeemed
+        - giftPointsAmount
+        - totalAmount
+        - giftPointsEarned
+        - currency
+        - estimatedDeliveryDate
+        - placedAt
+        - canCancel
+      properties:
+        id:
+          type: integer
+          format: int64
+        orderNumber:
+          type: string
+        status:
+          type: string
+          enum: [PENDING_PAYMENT, CONFIRMED, SHIPPED, DELIVERED, CANCELLED]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        shippingAddress:
+          $ref: '#/components/schemas/ShippingAddress'
+        subtotal:
+          type: number
+          description: Subtotal with 2 decimal places
+        vatRate:
+          type: number
+          description: VAT rate applied (e.g. 0.12)
+        vatAmount:
+          type: number
+          description: VAT amount with 2 decimal places
+        deliveryCharge:
+          type: number
+          description: Delivery charge with 2 decimal places
+        giftPointsRedeemed:
+          type: integer
+        giftPointsAmount:
+          type: number
+          description: Discount from points with 2 decimal places
+        totalAmount:
+          type: number
+          description: Total payable amount with 2 decimal places
+        giftPointsEarned:
+          type: integer
+        currency:
+          type: string
+          example: PHP
+        estimatedDeliveryDate:
+          type: string
+          format: date
+        placedAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+        canCancel:
+          type: boolean
+        cancelDeadline:
+          type: string
+          format: date-time
+          nullable: true
+        payment:
+          $ref: '#/components/schemas/PaymentResponse'
+
+    PaymentRequest:
+      type: object
+      required:
+        - method
+      properties:
+        method:
+          type: string
+          enum: [CREDIT_CARD, DEBIT_CARD, E_WALLET]
+        cardNumber:
+          type: string
+          writeOnly: true
+          description: 13-19 digit card number (Luhn valid) for card methods
+        cardHolderName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Cardholder full name for card methods
+        cvv:
+          type: string
+          pattern: '^\d{3,4}$'
+          writeOnly: true
+          description: 3 or 4 digit security code for card methods
+        expiry:
+          type: string
+          pattern: '^(0[1-9]|1[0-2])/\d{4}$'
+          writeOnly: true
+          description: Expiration date in MM/YYYY format for card methods
+        walletMobileNumber:
+          type: string
+          pattern: '^\+639\d{9}$'
+          writeOnly: true
+          description: Philippine mobile number for E_WALLET method
+
+    PurchaseConfirmationResponse:
+      type: object
+      required:
+        - payment
+        - order
+      properties:
+        payment:
+          $ref: '#/components/schemas/PaymentResponse'
+        order:
+          $ref: '#/components/schemas/OrderResponse'
+
+    AddedItem:
+      type: object
+      required:
+        - bookId
+        - title
+        - quantity
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        quantity:
+          type: integer
+
+    SkippedItem:
+      type: object
+      required:
+        - bookId
+        - title
+        - reason
+      properties:
+        bookId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        reason:
+          type: string
+          enum: [OUT_OF_STOCK, LIMIT_REACHED]
+
+    BuyAgainResponse:
+      type: object
+      required:
+        - cart
+        - added
+        - skipped
+      properties:
+        cart:
+          $ref: '#/components/schemas/CartResponse'
+        added:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddedItem'
+        skipped:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkippedItem'
+
+    BookPage:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookSummaryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    AuthorPage:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    PublisherPage:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublisherResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    OrderPage:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
+    Problem:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - code
+      properties:
+        type:
+          type: string
+          default: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          enum:
+            - VALIDATION_FAILED
+            - MALFORMED_REQUEST
+            - QUANTITY_LIMIT
+            - POINTS_EXCEED_BALANCE
+            - POINTS_EXCEED_LIMIT
+            - UNAUTHORIZED
+            - INVALID_CREDENTIALS
+            - PAYMENT_DECLINED
+            - BOOK_NOT_FOUND
+            - CATEGORY_NOT_FOUND
+            - AUTHOR_NOT_FOUND
+            - PUBLISHER_NOT_FOUND
+            - ADDRESS_NOT_FOUND
+            - ORDER_NOT_FOUND
+            - CART_ITEM_NOT_FOUND
+            - NOT_FOUND
+            - METHOD_NOT_ALLOWED
+            - UNSUPPORTED_MEDIA_TYPE
+            - EMAIL_TAKEN
+            - INSUFFICIENT_STOCK
+            - CART_EMPTY
+            - ORDER_NOT_PAYABLE
+            - ORDER_NOT_CANCELLABLE
+            - CANCEL_WINDOW_EXPIRED
+            - INTERNAL_ERROR
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Field or parameter validation error messages
+        bookIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          description: Book IDs with insufficient stock
+        transactionId:
+          type: string
+          description: Transaction ID for declined payments
