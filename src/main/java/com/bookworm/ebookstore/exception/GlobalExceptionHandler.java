@@ -47,6 +47,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ProblemDetail> handleDuplicateResourceException(DuplicateResourceException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();

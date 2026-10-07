@@ -75,13 +75,13 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/resources/
 ### 5. Authentication · in-progress · Beta
 Journey step 1: register and login. Passwords are hashed with BCrypt, login returns a JWT, and every customer endpoint requires it.
 **Done when:** a user can register and log in and gets a token; protected calls without a valid token return 401; wrong credentials and a duplicate email return clear errors.
-spec [0004](../specs/0004-authentication/index.md)
+spec [0004](../specs/0004-authentication/index.md) · code in `src/main/java/com/bookworm/ebookstore/{config,controller,dto,mapper,service}/`
 - [x] Design it (spec): `/architect authentication`
-- [ ] Build it: `/develop authentication`
-   - [ ] Security dependencies, JWT encoder/decoder, and properties (AC-5, AC-7)
-   - [ ] Auth DTOs with validation and password masking (AC-1, AC-3, AC-8)
-   - [ ] UserRepository queries, AuthService, and AuthController (AC-1, AC-2, AC-3, AC-4)
-   - [ ] Spring Security filter chain, public matchers, and ProblemEntryPoint (AC-5, AC-6)
+- [x] Build it: `/develop authentication`
+   - [x] Security dependencies, JWT encoder/decoder, and properties (AC-5, AC-7)
+   - [x] Auth DTOs with validation and password masking (AC-1, AC-3, AC-8)
+   - [x] UserRepository queries, AuthService, and AuthController (AC-1, AC-2, AC-3, AC-4)
+   - [x] Spring Security filter chain, public matchers, and ProblemEntryPoint (AC-5, AC-6)
 - [ ] Verify it: `/check verify authentication`
 - [ ] Test it: `/test authentication`
 

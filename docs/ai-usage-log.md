@@ -196,3 +196,27 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Spring Security OAuth2 resource server with symmetric HMAC-SHA256 tokens.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 11. Customer authentication and JWT security build (`/develop authentication`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Run `/develop authentication` in IBM Bob to build spec 0004: add Spring Security and OAuth2 Resource Server dependencies, implement DTO records, JWT generation with Nimbus JOSE, AuthService, custom AuthenticationEntryPoint for RFC 9457 errors, public ignoring bearer token resolver, and controllers.
+
+**AI output:**
+- Dependencies: added `spring-boot-starter-security`, `spring-boot-starter-oauth2-resource-server`, and `spring-security-test` in `pom.xml`.
+- Configuration: configured `SecurityBeansConfig` with `BCryptPasswordEncoder`, symmetric `SecretKeySpec`, `NimbusJwtEncoder`, and `NimbusJwtDecoder`. Configured `SecurityConfig` with stateless session management, public matchers, `PublicIgnoringBearerTokenResolver`, and `ProblemAuthenticationEntryPoint`.
+- DTOs: `RegisterRequest` (with email lowercasing/trimming, byte length validation, and password masking in `toString()`), `LoginRequest`, `AuthResponse`, and `UserResponse`.
+- Services: `JwtService` generating HS256 JWT tokens with `sub: <userId>`, 3600-second expiration, and `AuthService` handling registration and login.
+- Exception mapping: added `AuthenticationException` and `DuplicateResourceException` mapped to `INVALID_CREDENTIALS`, `UNAUTHORIZED`, and `EMAIL_TAKEN` in `GlobalExceptionHandler`.
+- Controller: `AuthController` under `/api/v1/auth/register` and `/api/v1/auth/login`.
+- Test suite: unit tests (`AuthServiceTest`), slice tests (`AuthControllerTest`), and integration tests (`SecurityConfigIntegrationTest`).
+- Build verification: `mvn clean install` runs 70 tests with 0 failures and 0 errors.
+
+**Decisions / choices to review:**
+- Implemented `PublicIgnoringBearerTokenResolver` to ensure that invalid or expired bearer tokens on public browsing endpoints are ignored and do not block catalogue browsing.
+- Maintained RFC 9457 Problem response format on authentication failures via `ProblemAuthenticationEntryPoint`.
+
+**Review / changes by me:** _pending_

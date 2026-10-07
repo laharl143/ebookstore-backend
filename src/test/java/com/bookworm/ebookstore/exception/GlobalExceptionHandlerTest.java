@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,20 +30,38 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest
 @ContextConfiguration(classes = {GlobalExceptionHandlerTest.StubTestController.class, GlobalExceptionHandler.class})
+@AutoConfigureMockMvc(addFilters = false)
 class GlobalExceptionHandlerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
+    public static class StubPayload {
+        @NotBlank(message = "Name cannot be blank")
+        private String name;
+
+        public StubPayload() {}
+
+        public StubPayload(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
     @RestController
     @RequestMapping("/test")
     @Validated
-    static class StubTestController {
-
-        record TestBody(@NotBlank(message = "Name cannot be blank") String name) {}
+    public static class StubTestController {
 
         @PostMapping("/body")
-        public String postBody(@Valid @RequestBody TestBody body) {
+        public String postBody(@Valid @RequestBody StubPayload body) {
             return "ok";
         }
 
