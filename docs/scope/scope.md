@@ -51,13 +51,13 @@ Records the project conventions in `AGENTS.md` from the real scaffold, then adds
 ### 3. Data model · in-progress
 Trims the draft in `docs/data-model.md` to the MVP (drops wishlist, reviews and coupons) and settles its open questions: category vs tags, formats, gift point rates, one or two step payment, and the order totals are calculated in.
 **Done when:** the ERD and table list match the MVP and every open question has an answer, and the schema plus seed data (categories, authors, publishers, about 20 books) load into PostgreSQL.
-spec [0002](../specs/0002-data-model/index.md)
+spec [0002](../specs/0002-data-model/index.md) · code in `src/main/resources/db/migration/`, `src/main/java/com/bookworm/ebookstore/{entity,repository,config}/`
 - [x] Design it (spec): `/architect data model`
-- [ ] Build it: `/develop data model`
-   - [ ] Schema migration V1: 13 tables, named constraints, sequence, indexes (AC-1, AC-2, AC-4, AC-6)
-   - [ ] Seed catalogue V2: 19 categories, 10 genres, authors, publishers, 24+ books in pesos (AC-3)
-   - [ ] Entities, repositories, `app.*` config and Clock bean (AC-5, AC-6)
-   - [ ] Tests on H2, run on PostgreSQL, final ERD in `docs/data-model.md` (AC-1 to AC-7)
+- [x] Build it: `/develop data model`
+   - [x] Schema migration V1: 13 tables, named constraints, sequence, indexes (AC-1, AC-2, AC-4, AC-6)
+   - [x] Seed catalogue V2: 19 categories, 10 genres, authors, publishers, 24+ books in pesos (AC-3)
+   - [x] Entities, repositories, `app.*` config and Clock bean (AC-5, AC-6)
+   - [x] Tests on H2, run on PostgreSQL, final ERD in `docs/data-model.md` (AC-1 to AC-7)
 - [ ] Verify it: `/check verify data model`
 
 ### 4. API contract (OpenAPI) · needs a decision

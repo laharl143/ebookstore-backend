@@ -110,3 +110,19 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **AI output:** spec `docs/specs/0002-data-model/` (`index.md` build spec with the ERD, 13 tables, value sourcing, invariants, build plan; `rationale.md` with options, a 35 row decision log and the cross check). A read only cross check on a second model (Sonnet) found 21 gaps, including SQL types that would fail on H2, seed ids that would break identity counters, and races on stock and points. All recommended fixes were applied (auto picked). The AI also corrected its own draft from 20 to the 19 real wireframe categories instead of inventing one. Scope feature 3 now has build milestones.
 
 **Review / changes by me:** _pending (auto picked rows 14 and 17 to 35 in the decision log still to review)_
+
+---
+
+## 6. Data model build (`/develop data model`)
+
+**Date:** 2026-10-07
+
+**Prompt (summary):** Ran `/develop data model` to build spec 0002. The first run stopped at a usage limit after the two migrations; a second `/develop data model` run resumed and finished the build.
+
+**AI output:** Flyway `V1__create_schema.sql` (13 tables, 61 named constraints, the order number sequence, 11 indexes) and `V2__seed_catalogue.sql` (19 categories, 10 genres, 9 authors, 4 publishers, 27 books in pesos with genre tags; no users). Twelve JPA entities with six enums, twelve Spring Data repositories, the `app.*` settings bound into a `StoreProperties` record, and a UTC `Clock` bean. Three test classes (40 tests): seed counts, 24 bad inserts that must each fail on their named constraint, and entity mapping. The final ERD and table list replaced the draft in `docs/data-model.md`, and verify steps went into `docs/specs/0002-data-model/verify.md`.
+
+**Checks run:** `mvn clean install` green on H2 (both migrations, Hibernate `validate`, 40 tests). `mvn spring-boot:run` against local PostgreSQL 16.15 applied both migrations and started (on port 8091, because 8080 was already taken); psql showed the expected row counts.
+
+**AI choices inside the spec:** the demo book list (public domain classics by real authors such as Rizal, Austen and Conan Doyle, plus fictional modern authors and fictional publishers so no real company is misrepresented); one extra CHECK, `ck_order_items_format`, so order line formats have an allowed list like book formats.
+
+**Review / changes by me:** _pending (run `/check verify data model`)_
