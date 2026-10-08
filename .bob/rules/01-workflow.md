@@ -18,6 +18,8 @@
 
 ## Hard rules
 
+- Run Maven as plain `mvn ...` (for example `mvn test-compile`, `mvn clean install`), never `.\mvnw.cmd` or `mvnw`. `mvn` is on the auto approve list; the wrapper is not, so it stops for approval every time.
+
 - Never build a feature marked `needs a decision` without a spec. If a value or behavior the build needs is not named in the spec, stop and ask me instead of inventing it.
 - Never edit an applied Flyway migration (`V1__`, `V2__`); schema changes are a new `V<n>__` file.
 - `src/main/resources/openapi.yaml` is the API contract (spec 0003). A controller that is not in the file must not exist; change the file first.
