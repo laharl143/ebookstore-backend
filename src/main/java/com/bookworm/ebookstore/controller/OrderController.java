@@ -74,6 +74,16 @@ public class OrderController {
         return ResponseEntity.status(201).body(response);
     }
 
+    @PostMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long orderId
+    ) {
+        Long userId = getUserId(jwt);
+        OrderResponse response = orderService.cancelOrder(userId, orderId);
+        return ResponseEntity.ok(response);
+    }
+
     private Long getUserId(Jwt jwt) {
         return Long.parseLong(jwt.getSubject());
     }

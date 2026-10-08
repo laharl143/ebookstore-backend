@@ -17,7 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query(value = "SELECT nextval('order_number_seq')", nativeQuery = true)
     long nextOrderNumber();
 
-    Optional<Order> findByIdAndUserId(Long id, Long userId);
+    @Query("SELECT DISTINCT o FROM Order o LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.book b LEFT JOIN FETCH b.author WHERE o.id = :id AND o.user.id = :userId")
+    Optional<Order> findByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
     Page<Order> findByUserId(Long userId, Pageable pageable);
 

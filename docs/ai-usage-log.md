@@ -455,3 +455,32 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+## 22. Cancel within 48 hours feature build (`/develop cancel within 48 hours`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** `/develop cancel within 48 hours` — implement Journey step 12 per spec 0002 / 0003: cancellation logic for unpaid and confirmed orders, status guards, stock increment, refund status update, and gift point reversal/restoration.
+
+**AI output:**
+- Extended [`BookRepository`](src/main/java/com/bookworm/ebookstore/repository/BookRepository.java) with `incrementStock` guarded query.
+- Enhanced [`OrderRepository`](src/main/java/com/bookworm/ebookstore/repository/OrderRepository.java) `findByIdAndUserId` to eagerly join-fetch order items and book authors to prevent lazy initialization issues during response mapping.
+- Implemented `cancelOrder` in [`OrderService`](src/main/java/com/bookworm/ebookstore/service/OrderService.java):
+  - Ownership and existence check (throws `ResourceNotFoundException(ORDER_NOT_FOUND)` on mismatch or missing).
+  - Status guard: `PENDING_PAYMENT` allowed anytime; `CONFIRMED` allowed if `now <= referenceTime + cancelWindowHours` (48h); `SHIPPED`, `DELIVERED`, `CANCELLED` rejected with `ConflictException(ORDER_NOT_CANCELLABLE)`.
+  - Sets order status to `CANCELLED`, `cancelledAt` to `now`.
+  - Restores physical book stock in ascending `book_id` order (skips eBooks).
+  - Restores redeemed gift points to user balance and records `RESTORED` ledger entry.
+  - For previously `CONFIRMED` orders: marks payment status `REFUNDED` and reverses earned gift points (recording `REVERSED` ledger entry bounded by available balance).
+- Added `POST /api/v1/orders/{orderId}/cancel` endpoint to [`OrderController`](src/main/java/com/bookworm/ebookstore/controller/OrderController.java).
+- Added 5 integration tests in [`PaymentServiceIntegrationTest`](src/test/java/com/bookworm/ebookstore/service/PaymentServiceIntegrationTest.java) covering unpaid cancellation, confirmed within 48h cancellation, already cancelled 409 conflict, wrong user 404 not found, and confirmed after 48h 409 conflict.
+- Added 3 controller tests in [`OrderAndAccountControllerTest`](src/test/java/com/bookworm/ebookstore/controller/OrderAndAccountControllerTest.java) verifying 200 OK, 409 conflict, and 401 unauthorized responses.
+- Total tests: 141, all passing. BUILD SUCCESS.
+
+**Decisions / choices to review:**
+- Used `paidAt` (falling back to `placedAt`) plus `StoreProperties.cancelWindowHours()` (48) as the cancellation deadline.
+- Applied `@Modifying(clearAutomatically = true)` on `decrementStockGuarded` and `incrementStock` in `BookRepository` to ensure entity cache stays aligned with database state across operations.
+- Eagerly fetched `items` and `author` relationships in `OrderRepository.findByIdAndUserId` for clean DTO mapping.
+
+**Review / changes by me:** _pending_
+
+---

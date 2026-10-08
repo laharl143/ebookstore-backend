@@ -341,6 +341,99 @@ public class OrderService {
         return new PurchaseConfirmationResponse(OrderMapper.toPaymentResponse(savedPayment, storeProperties.currency()), orderResponse);
     }
 
+    @Transactional
+    public OrderResponse cancelOrder(Long userId, Long orderId) {
+        // 1. Load and ownership-check the order
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
+
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        // 2. Guard: check if order is cancellable
+        OrderStatus currentStatus = order.getStatus();
+        if (currentStatus == OrderStatus.PENDING_PAYMENT) {
+            // Unpaid orders can be cancelled at any time
+        } else if (currentStatus == OrderStatus.CONFIRMED) {
+            // Confirmed orders can only be cancelled within 48 hours of paidAt (or placedAt per deadline rule)
+            OffsetDateTime referenceTime = order.getPaidAt() != null ? order.getPaidAt() : order.getPlacedAt();
+            OffsetDateTime cancelDeadline = referenceTime.plusHours(storeProperties.cancelWindowHours());
+            if (now.isAfter(cancelDeadline)) {
+                throw new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE, "Cancellation window has expired");
+            }
+        } else {
+            // SHIPPED, DELIVERED, CANCELLED cannot be cancelled
+            throw new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE, "Order cannot be cancelled in status: " + currentStatus);
+        }
+
+        // 3. Mark order as CANCELLED
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setCancelledAt(now);
+        order.setUpdatedAt(now);
+        Order savedOrder = orderRepository.save(order);
+
+        // 4. Restore physical book stock (in ascending book_id order)
+        List<OrderItem> sortedItems = order.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getBook().getId()))
+                .toList();
+
+        for (OrderItem item : sortedItems) {
+            Book book = item.getBook();
+            if (book.getFormat() != BookFormat.EBOOK) {
+                bookRepository.incrementStock(book.getId(), item.getQuantity());
+            }
+        }
+
+        // 5. Restore redeemed gift points if any (RESTORED ledger row and balance credit)
+        int pointsRedeemed = order.getGiftPointsRedeemed();
+        if (pointsRedeemed > 0) {
+            com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
+                    .orElseThrow(() -> new AuthenticationException("User not found"));
+            userRepository.addGiftPoints(userId, pointsRedeemed);
+            user.setGiftPointsBalance(user.getGiftPointsBalance() + pointsRedeemed);
+
+            GiftPointTransaction gpt = new GiftPointTransaction();
+            gpt.setUser(user);
+            gpt.setOrder(savedOrder);
+            gpt.setType(GiftPointType.RESTORED);
+            gpt.setPoints(pointsRedeemed);
+            gpt.setCreatedAt(now);
+            giftPointTransactionRepository.save(gpt);
+        }
+
+        // 6. If previously CONFIRMED: refund payment and reverse earned points
+        Payment payment = null;
+        if (currentStatus == OrderStatus.CONFIRMED) {
+            payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            if (payment != null) {
+                payment.setStatus(PaymentStatus.REFUNDED);
+                paymentRepository.save(payment);
+            }
+
+            int pointsEarned = order.getGiftPointsEarned();
+            if (pointsEarned > 0) {
+                com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
+                        .orElseThrow(() -> new AuthenticationException("User not found"));
+                int userBalance = user.getGiftPointsBalance();
+                int pointsToReverse = Math.min(pointsEarned, Math.max(0, userBalance));
+
+                if (pointsToReverse > 0) {
+                    userRepository.deductGiftPointsGuarded(userId, pointsToReverse);
+                    user.setGiftPointsBalance(user.getGiftPointsBalance() - pointsToReverse);
+
+                    GiftPointTransaction gpt = new GiftPointTransaction();
+                    gpt.setUser(user);
+                    gpt.setOrder(savedOrder);
+                    gpt.setType(GiftPointType.REVERSED);
+                    gpt.setPoints(-pointsToReverse);
+                    gpt.setCreatedAt(now);
+                    giftPointTransactionRepository.save(gpt);
+                }
+            }
+        }
+
+        return OrderMapper.toResponse(savedOrder, payment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
+    }
+
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long userId, Long orderId) {
         Order order = orderRepository.findByIdAndUserId(orderId, userId)

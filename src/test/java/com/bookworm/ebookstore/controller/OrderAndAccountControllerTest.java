@@ -25,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.bookworm.ebookstore.config.ProblemAuthenticationEntryPoint;
@@ -67,7 +68,7 @@ class OrderAndAccountControllerTest {
     @MockBean
     private OrderService orderService;
 
-    private static SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor userJwt() {
+    private static JwtRequestPostProcessor userJwt() {
         return SecurityMockMvcRequestPostProcessors.jwt()
                 .jwt(jwt -> jwt.subject("1"))
                 .authorities(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
@@ -304,6 +305,52 @@ class OrderAndAccountControllerTest {
         mockMvc.perform(post("/api/v1/orders/100/payments")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/cancel cancels order and returns 200")
+    void cancelOrder_success_returns200() throws Exception {
+        ShippingAddress shipping = new ShippingAddress(
+                "Maria", "Santos", "maria@example.ph", "+639171234567",
+                "123 Rizal Ave", null, "Manila", "Metro Manila", "1000", "Philippines"
+        );
+        OrderItemResponse item = new OrderItemResponse(
+                5L, "Sample Book", BookFormat.PAPERBACK, "Author A", null,
+                new BigDecimal("299.00"), 1, new BigDecimal("299.00")
+        );
+        OrderResponse response = new OrderResponse(
+                100L, "BW-20261008-000001", OrderStatus.CANCELLED,
+                List.of(item), shipping, new BigDecimal("299.00"), new BigDecimal("0.12"),
+                new BigDecimal("35.88"), new BigDecimal("0.00"), 0, new BigDecimal("0.00"),
+                new BigDecimal("334.88"), 0, "PHP", LocalDate.now(), OffsetDateTime.now(),
+                null, OffsetDateTime.now(), false, null, null
+        );
+        when(orderService.cancelOrder(eq(1L), eq(100L))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/orders/100/cancel")
+                        .with(userJwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(100))
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/cancel when not cancellable returns 409")
+    void cancelOrder_notCancellable_returns409() throws Exception {
+        when(orderService.cancelOrder(eq(1L), eq(100L)))
+                .thenThrow(new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE, "Cancellation window has expired"));
+
+        mockMvc.perform(post("/api/v1/orders/100/cancel")
+                        .with(userJwt()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ORDER_NOT_CANCELLABLE"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/cancel without JWT returns 401")
+    void cancelOrder_noJwt_returns401() throws Exception {
+        mockMvc.perform(post("/api/v1/orders/100/cancel"))
                 .andExpect(status().isUnauthorized());
     }
 }

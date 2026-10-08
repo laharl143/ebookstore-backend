@@ -80,7 +80,7 @@ public final class OrderMapper {
             cancelDeadline = null;
         } else if (order.getStatus() == OrderStatus.CONFIRMED && order.getPaidAt() != null) {
             cancelDeadline = order.getPaidAt().plusHours(cancelWindowHours);
-            canCancel = now.isBefore(cancelDeadline);
+            canCancel = !now.isAfter(cancelDeadline);
         } else {
             canCancel = false;
             cancelDeadline = null;

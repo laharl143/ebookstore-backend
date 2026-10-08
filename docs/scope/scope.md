@@ -135,7 +135,11 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
 ### 11. Cancel within 48 hours · Beta
 Journey step 12: the customer cancels a confirmed order within 48 hours, before it ships. The payment is marked refunded and stock and gift points are restored.
 **Done when:** a cancel inside the window succeeds and restores stock and points; a cancel after 48 hours, on a shipped order, or on someone else's order is rejected.
-- [ ] Build it: `/develop cancel within 48 hours`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository,mapper}/`
+- [x] Build it: `/develop cancel within 48 hours`
+   - [x] cancelOrder in OrderService with status guards, physical book stock increment, and gift points restoration/reversal
+   - [x] POST /api/v1/orders/{orderId}/cancel in OrderController
+   - [x] Integration and controller tests for unpaid and confirmed order cancellation (141 tests, BUILD SUCCESS)
 
 ## Journey 3: E-store Home (slide steps 1 and 2)
 
