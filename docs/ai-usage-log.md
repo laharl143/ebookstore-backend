@@ -586,3 +586,19 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 
 **Decisions / choices to review:**
 - Video script covers the minimum evidence the AI review rubric needs: agentic tool usage, API design, working app, and test results. Optional PDF report section left in scope but not scripted.
+
+---
+
+## 29. End to end run and screenshots (Claude Code)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** I asked Claude Code to run the app once end to end and take screenshots with the in app browser.
+
+**AI output:** `mvn clean install` passed with 141 tests and 0 failures. The app ran on local PostgreSQL 16 and a script walked every journey as a fresh test customer (37 calls: sign up and log in, catalogue, basket, checkout, payment, history, Buy It Again, recommendations, cancel). Seven screenshots went into `docs/screenshots/`: Swagger UI, a live Swagger call, a book detail, the journey results, the database rows and the test run.
+
+**Bugs found (34 of 37 steps as expected):**
+- A card ending `0002` is accepted. Spec 0002 says it must be declined with 402 `PAYMENT_DECLINED` and a FAILED payment row; `OrderService.processPayment` always writes SUCCESS.
+- Cancel does not save the CANCELLED status. `BookRepository.incrementStock` uses `@Modifying(clearAutomatically = true)`, which clears the order change before it is flushed. The order stays CONFIRMED with no `cancelled_at`, so a second cancel runs again and restores stock and points twice (ledger rows 4 to 7 for order BW-20261008-000002). `refunded_at` is also never set.
+
+**Review / changes by me:** _pending (decide how to fix the two bugs)_
