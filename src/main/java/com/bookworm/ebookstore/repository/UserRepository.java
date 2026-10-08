@@ -24,4 +24,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.giftPointsBalance = u.giftPointsBalance - :points WHERE u.id = :id AND u.giftPointsBalance >= :points")
     int deductGiftPointsGuarded(@Param("id") Long id, @Param("points") int points);
+
+    @Modifying
+    @Query("UPDATE User u SET u.giftPointsBalance = u.giftPointsBalance + :points WHERE u.id = :id")
+    void addGiftPoints(@Param("id") Long id, @Param("points") int points);
 }

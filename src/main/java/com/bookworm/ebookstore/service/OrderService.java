@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,8 @@ import com.bookworm.ebookstore.dto.AddressRequest;
 import com.bookworm.ebookstore.dto.CreateOrderRequest;
 import com.bookworm.ebookstore.dto.OrderPage;
 import com.bookworm.ebookstore.dto.OrderResponse;
+import com.bookworm.ebookstore.dto.PaymentRequest;
+import com.bookworm.ebookstore.dto.PurchaseConfirmationResponse;
 import com.bookworm.ebookstore.entity.Address;
 import com.bookworm.ebookstore.entity.Book;
 import com.bookworm.ebookstore.entity.BookFormat;
@@ -32,6 +35,8 @@ import com.bookworm.ebookstore.entity.Order;
 import com.bookworm.ebookstore.entity.OrderItem;
 import com.bookworm.ebookstore.entity.OrderStatus;
 import com.bookworm.ebookstore.entity.Payment;
+import com.bookworm.ebookstore.entity.PaymentMethod;
+import com.bookworm.ebookstore.entity.PaymentStatus;
 import com.bookworm.ebookstore.exception.ApiErrorCode;
 import com.bookworm.ebookstore.exception.AuthenticationException;
 import com.bookworm.ebookstore.exception.BadRequestException;
@@ -266,13 +271,83 @@ public class OrderService {
         return OrderMapper.toResponse(savedOrder, null, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
     }
 
+    @Transactional
+    public PurchaseConfirmationResponse processPayment(Long userId, Long orderId, PaymentRequest request) {
+        // 1. Load and ownership-check the order
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
+
+        // 2. Guard: only PENDING_PAYMENT orders can be paid
+        if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+            throw new ConflictException(ApiErrorCode.ORDER_NOT_PAYABLE, "Order is not in a payable state");
+        }
+
+        // 3. Validate card fields for card methods
+        PaymentMethod method = request.method();
+        if (method == PaymentMethod.CREDIT_CARD || method == PaymentMethod.DEBIT_CARD) {
+            validateCardFields(request);
+        }
+
+        // 4. Extract last 4 digits (never store the full number)
+        String cardLast4 = null;
+        if (method == PaymentMethod.CREDIT_CARD || method == PaymentMethod.DEBIT_CARD) {
+            String cardNumber = request.cardNumber();
+            if (cardNumber != null && cardNumber.length() >= 4) {
+                cardLast4 = cardNumber.substring(cardNumber.length() - 4);
+            }
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        // 5. Persist the payment record (simulated: always SUCCESS)
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setMethod(method);
+        payment.setAmount(order.getTotalAmount());
+        payment.setStatus(PaymentStatus.SUCCESS);
+        payment.setCardLast4(cardLast4);
+        payment.setTransactionId(UUID.randomUUID().toString());
+        payment.setCreatedAt(now);
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // 6. Compute gift points earned: floor(totalAmount / pesosPerPoint)
+        int pesosPerPoint = storeProperties.points().pesosPerPoint();
+        int pointsEarned = order.getTotalAmount().divide(BigDecimal.valueOf(pesosPerPoint), 0, RoundingMode.FLOOR).intValue();
+
+        // 7. Confirm the order: status → CONFIRMED, paidAt, giftPointsEarned
+        order.setStatus(OrderStatus.CONFIRMED);
+        order.setPaidAt(now);
+        order.setGiftPointsEarned(pointsEarned);
+        order.setUpdatedAt(now);
+        Order savedOrder = orderRepository.save(order);
+
+        // 8. Credit gift points to user and write ledger row
+        if (pointsEarned > 0) {
+            com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
+                    .orElseThrow(() -> new AuthenticationException("User not found"));
+            userRepository.addGiftPoints(userId, pointsEarned);
+            user.setGiftPointsBalance(user.getGiftPointsBalance() + pointsEarned);
+
+            GiftPointTransaction gpt = new GiftPointTransaction();
+            gpt.setUser(user);
+            gpt.setOrder(savedOrder);
+            gpt.setType(GiftPointType.EARNED);
+            gpt.setPoints(pointsEarned);
+            gpt.setCreatedAt(now);
+            giftPointTransactionRepository.save(gpt);
+        }
+
+        OrderResponse orderResponse = OrderMapper.toResponse(savedOrder, savedPayment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
+        return new PurchaseConfirmationResponse(OrderMapper.toPaymentResponse(savedPayment, storeProperties.currency()), orderResponse);
+    }
+
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long userId, Long orderId) {
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
 
         OffsetDateTime now = OffsetDateTime.now(clock);
-        Payment payment = null; // feature 10 will link payments
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
         return OrderMapper.toResponse(order, payment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
     }
 
@@ -288,7 +363,10 @@ public class OrderService {
 
         OffsetDateTime now = OffsetDateTime.now(clock);
         List<OrderResponse> responses = orderPage.getContent().stream()
-                .map(order -> OrderMapper.toResponse(order, null, storeProperties.currency(), storeProperties.cancelWindowHours(), now))
+                .map(order -> {
+                    Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+                    return OrderMapper.toResponse(order, payment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
+                })
                 .toList();
 
         return new OrderPage(
@@ -298,6 +376,51 @@ public class OrderService {
                 orderPage.getTotalElements(),
                 orderPage.getTotalPages()
         );
+    }
+
+    /**
+     * Validates card-specific fields for CREDIT_CARD and DEBIT_CARD methods.
+     * Checks that cardNumber, cardHolderName, cvv, and expiry are all present and that
+     * the card number passes a Luhn check.
+     */
+    private void validateCardFields(PaymentRequest request) {
+        if (request.cardNumber() == null || request.cardNumber().isBlank()) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "Card number is required for card payment methods");
+        }
+        if (request.cardHolderName() == null || request.cardHolderName().isBlank()) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "Cardholder name is required for card payment methods");
+        }
+        if (request.cvv() == null || request.cvv().isBlank()) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "CVV is required for card payment methods");
+        }
+        if (request.expiry() == null || request.expiry().isBlank()) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "Expiry date is required for card payment methods");
+        }
+        String digits = request.cardNumber().replaceAll("\\D", "");
+        if (digits.length() < 13 || digits.length() > 19) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "Card number must be between 13 and 19 digits");
+        }
+        if (!luhnCheck(digits)) {
+            throw new BadRequestException(ApiErrorCode.VALIDATION_FAILED, "Card number is invalid");
+        }
+    }
+
+    /** Standard Luhn algorithm. Returns true if the digit string passes. */
+    private boolean luhnCheck(String digits) {
+        int sum = 0;
+        boolean alternate = false;
+        for (int i = digits.length() - 1; i >= 0; i--) {
+            int n = digits.charAt(i) - '0';
+            if (alternate) {
+                n *= 2;
+                if (n > 9) {
+                    n -= 9;
+                }
+            }
+            sum += n;
+            alternate = !alternate;
+        }
+        return sum % 10 == 0;
     }
 
     private record ResolvedAddress(

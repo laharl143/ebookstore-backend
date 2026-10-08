@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.bookworm.ebookstore.config.ProblemAuthenticationEntryPoint;
 import com.bookworm.ebookstore.config.SecurityBeansConfig;
 import com.bookworm.ebookstore.config.SecurityConfig;
+import com.bookworm.ebookstore.exception.ConflictException;
 import com.bookworm.ebookstore.exception.GlobalExceptionHandler;
 import com.bookworm.ebookstore.dto.AddressRequest;
 import com.bookworm.ebookstore.dto.AddressResponse;
@@ -37,10 +38,15 @@ import com.bookworm.ebookstore.dto.CreateOrderRequest;
 import com.bookworm.ebookstore.dto.OrderItemResponse;
 import com.bookworm.ebookstore.dto.OrderPage;
 import com.bookworm.ebookstore.dto.OrderResponse;
+import com.bookworm.ebookstore.dto.PaymentResponse;
+import com.bookworm.ebookstore.dto.PurchaseConfirmationResponse;
 import com.bookworm.ebookstore.dto.ShippingAddress;
 import com.bookworm.ebookstore.dto.UserResponse;
 import com.bookworm.ebookstore.entity.BookFormat;
 import com.bookworm.ebookstore.entity.OrderStatus;
+import com.bookworm.ebookstore.entity.PaymentMethod;
+import com.bookworm.ebookstore.entity.PaymentStatus;
+import com.bookworm.ebookstore.exception.ApiErrorCode;
 import com.bookworm.ebookstore.service.AccountService;
 import com.bookworm.ebookstore.service.OrderService;
 
@@ -201,5 +207,103 @@ class OrderAndAccountControllerTest {
         mockMvc.perform(get("/api/v1/orders").with(userJwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items").isArray());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/payments with wallet method returns 201 PurchaseConfirmationResponse")
+    void processPayment_wallet_returns201() throws Exception {
+        ShippingAddress shipping = new ShippingAddress(
+                "Maria", "Santos", "maria@example.ph", "+639171234567",
+                "123 Rizal Ave", null, "Manila", "Metro Manila", "1000", "Philippines"
+        );
+        OrderItemResponse item = new OrderItemResponse(
+                5L, "Sample Book", BookFormat.EBOOK, "Author A", null,
+                new BigDecimal("299.00"), 1, new BigDecimal("299.00")
+        );
+        PaymentResponse paymentResponse = new PaymentResponse(
+                "txn-abc123", PaymentMethod.E_WALLET, PaymentStatus.SUCCESS,
+                new BigDecimal("299.00"), "PHP", null, null, OffsetDateTime.now(), null
+        );
+        OrderResponse orderResponse = new OrderResponse(
+                100L, "BW-20261008-000001", OrderStatus.CONFIRMED,
+                List.of(item), shipping, new BigDecimal("299.00"), new BigDecimal("0.12"),
+                new BigDecimal("35.88"), new BigDecimal("0.00"), 0, new BigDecimal("0.00"),
+                new BigDecimal("334.88"), 2, "PHP", LocalDate.now(), OffsetDateTime.now(),
+                OffsetDateTime.now(), null, true, OffsetDateTime.now().plusHours(48), paymentResponse
+        );
+        PurchaseConfirmationResponse confirmation = new PurchaseConfirmationResponse(paymentResponse, orderResponse);
+
+        when(orderService.processPayment(eq(1L), eq(100L), any())).thenReturn(confirmation);
+
+        String json = """
+                {
+                    "method": "E_WALLET",
+                    "walletMobileNumber": "+639171234567"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/orders/100/payments")
+                        .with(userJwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.payment.transactionId").value("txn-abc123"))
+                .andExpect(jsonPath("$.payment.status").value("SUCCESS"))
+                .andExpect(jsonPath("$.order.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.order.giftPointsEarned").value(2));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/payments missing method returns 400 VALIDATION_FAILED")
+    void processPayment_missingMethod_returns400() throws Exception {
+        String json = """
+                {
+                    "walletMobileNumber": "+639171234567"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/orders/100/payments")
+                        .with(userJwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/payments on already-confirmed order returns 409")
+    void processPayment_alreadyConfirmed_returns409() throws Exception {
+        when(orderService.processPayment(eq(1L), eq(100L), any()))
+                .thenThrow(new ConflictException(ApiErrorCode.ORDER_NOT_PAYABLE, "Order is not in a payable state"));
+
+        String json = """
+                {
+                    "method": "E_WALLET",
+                    "walletMobileNumber": "+639171234567"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/orders/100/payments")
+                        .with(userJwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ORDER_NOT_PAYABLE"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/payments without JWT returns 401")
+    void processPayment_noJwt_returns401() throws Exception {
+        String json = """
+                {
+                    "method": "E_WALLET",
+                    "walletMobileNumber": "+639171234567"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/orders/100/payments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isUnauthorized());
     }
 }

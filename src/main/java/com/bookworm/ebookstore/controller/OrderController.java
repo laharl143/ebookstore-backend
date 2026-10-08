@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bookworm.ebookstore.dto.CreateOrderRequest;
 import com.bookworm.ebookstore.dto.OrderPage;
 import com.bookworm.ebookstore.dto.OrderResponse;
+import com.bookworm.ebookstore.dto.PaymentRequest;
+import com.bookworm.ebookstore.dto.PurchaseConfirmationResponse;
 import com.bookworm.ebookstore.entity.OrderStatus;
 import com.bookworm.ebookstore.service.OrderService;
 
@@ -59,6 +61,17 @@ public class OrderController {
     ) {
         Long userId = getUserId(jwt);
         return ResponseEntity.ok(orderService.getOrderById(userId, orderId));
+    }
+
+    @PostMapping("/{orderId}/payments")
+    public ResponseEntity<PurchaseConfirmationResponse> processPayment(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long orderId,
+            @Valid @RequestBody PaymentRequest request
+    ) {
+        Long userId = getUserId(jwt);
+        PurchaseConfirmationResponse response = orderService.processPayment(userId, orderId, request);
+        return ResponseEntity.status(201).body(response);
     }
 
     private Long getUserId(Jwt jwt) {

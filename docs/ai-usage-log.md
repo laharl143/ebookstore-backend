@@ -427,3 +427,31 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+
+## 21. Simulated payment and confirmation (`/develop simulated payment and confirmation`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** `/develop simulated payment and confirmation` — build feature 10 from the API contract (spec 0003). No separate design spec; the openapi.yaml contract is the source of truth.
+
+**AI output:**
+- New DTO [`src/main/java/com/bookworm/ebookstore/dto/PaymentRequest.java`](src/main/java/com/bookworm/ebookstore/dto/PaymentRequest.java) with `@NotNull`, `@Pattern`, `@Size` Bean Validation on all sensitive fields.
+- New DTO [`src/main/java/com/bookworm/ebookstore/dto/PurchaseConfirmationResponse.java`](src/main/java/com/bookworm/ebookstore/dto/PurchaseConfirmationResponse.java) wrapping `PaymentResponse` and `OrderResponse`.
+- `addGiftPoints` bulk-update query added to [`UserRepository`](src/main/java/com/bookworm/ebookstore/repository/UserRepository.java).
+- `findByOrderId` derived query added to [`PaymentRepository`](src/main/java/com/bookworm/ebookstore/repository/PaymentRepository.java).
+- `processPayment` in [`OrderService`](src/main/java/com/bookworm/ebookstore/service/OrderService.java): ownership check, PENDING_PAYMENT guard, card field validation with Luhn check, stores only last 4 digits, simulates SUCCESS, sets order CONFIRMED + paidAt, computes and credits gift points earned (floor of totalAmount / pesosPerPoint), writes EARNED ledger row.
+- `getOrderById` and `getOrders` updated to load the payment and include it in responses.
+- `POST /api/v1/orders/{orderId}/payments` endpoint added to [`OrderController`](src/main/java/com/bookworm/ebookstore/controller/OrderController.java).
+- 8 new service integration tests in [`PaymentServiceIntegrationTest`](src/test/java/com/bookworm/ebookstore/service/PaymentServiceIntegrationTest.java): wallet payment, credit card (last 4 only), gift points earned, double-payment conflict, missing card number, invalid Luhn, order not found, getOrderById includes payment.
+- 4 new controller tests added to [`OrderAndAccountControllerTest`](src/test/java/com/bookworm/ebookstore/controller/OrderAndAccountControllerTest.java): 201 with PurchaseConfirmationResponse, missing method 400, already-confirmed 409, no JWT 401.
+- Total tests: 133, all passing. BUILD SUCCESS.
+
+**Decisions / choices to review:**
+- Payment simulation is always SUCCESS (no FAILED scenario is triggered server-side, consistent with the scope description "simulated payment").
+- Gift points earned formula: `floor(totalAmount / pesosPerPoint)` where `pesosPerPoint = 100` from `app.properties`. No spec names the exact formula; I used the data model comment and the existing `pesosPerPoint` property.
+- The `walletMobileNumber` validation (`^\\+639\\d{9}$`) mirrors the OpenAPI pattern exactly.
+- Full card number, CVV, expiry and wallet number are never persisted; only `cardLast4` reaches the database.
+
+**Review / changes by me:** _pending_
+
+---

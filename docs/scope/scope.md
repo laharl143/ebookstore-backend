@@ -24,7 +24,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 7 | Book detail | Journey 1: Catalogue | done |
 | 8 | Basket | Journey 2: Payment & purchase | done |
 | 9 | Checkout and order | Journey 2: Payment & purchase | done |
-| 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | planned |
+| 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | in-progress |
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | planned |
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | planned |
 | 13 | Recommendations | Journey 3: E-store Home | planned |
@@ -121,10 +121,16 @@ spec [0005](../specs/0005-checkout-and-order/index.md) · code in `src/main/java
 - [x] Verify it: /verify checkout and order (skipped: you marked it done after tests passed)
 - [x] Test it: /test checkout and order
 
-### 10. Simulated payment and confirmation · Beta
+### 10. Simulated payment and confirmation · Beta · in-progress
 Journey steps 10 to 12: pay with credit card, debit card, UPI or wallet. The request is validated and then discarded except for the method, the last 4 digits, the status and a generated transaction id. The order is confirmed and gift points are earned.
 **Done when:** a valid payment confirms the order and returns a confirmation with the purchased books; an invalid card format is rejected; no full card number or CVV ever reaches the database or the logs.
-- [ ] Build it: `/develop simulated payment and confirmation`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository,dto}/`
+- [x] Build it: `/develop simulated payment and confirmation`
+   - [x] PaymentRequest and PurchaseConfirmationResponse DTOs
+   - [x] processPayment in OrderService: guard, card validation, Luhn check, store last 4 only, confirm order, earn gift points
+   - [x] POST /api/v1/orders/{orderId}/payments in OrderController
+   - [x] getOrderById and getOrders updated to include payment data
+   - [x] Service integration tests and controller tests (133 tests, BUILD SUCCESS)
 
 ### 11. Cancel within 48 hours · Beta
 Journey step 12: the customer cancels a confirmed order within 48 hours, before it ships. The payment is marked refunded and stock and gift points are restored.
