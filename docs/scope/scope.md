@@ -28,7 +28,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | done |
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | done |
 | 13 | Recommendations | Journey 3: E-store Home | done |
-| 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
+| 14 | Run kit (Postgres setup, README, Insomnia) | Submission | done |
 | 15 | Git branch and pull request | Submission | planned |
 | 16 | Walkthrough video, report and submission | Submission | planned |
 
@@ -165,10 +165,13 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
 
 ## Submission
 
-### 14. Run kit (Postgres setup, README, Insomnia)
+### 14. Run kit (Postgres setup, README, Insomnia) · done
 Everything a reviewer needs to run and check it: PostgreSQL setup steps for Windows, `application.properties` reading credentials from environment variables, a README with run steps and the endpoint list, and an Insomnia collection that walks all 12 journeys.
 **Done when:** following the README on a fresh Windows machine starts the app; the Insomnia collection runs every journey successfully and the new rows are visible in PostgreSQL; `mvn test` passes.
-- [ ] Build it: `/develop run kit`
+code in `README.md`, `docs/insomnia-collection.json`
+- [x] Build it: `/develop run kit`
+   - [x] README.md: PostgreSQL Windows setup, env vars, run steps, endpoint list
+   - [x] Insomnia collection: all 12 journeys
 
 ### 15. Git branch and pull request
 A personal GitHub repo with the work on `feature/api-implementation` and a pull request whose description carries the API documentation. Your manager is added as a collaborator.

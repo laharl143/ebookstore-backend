@@ -547,3 +547,24 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+
+---
+
+## 26. Run kit build (`/develop run kit`)
+
+**Date:** 2026-10-08
+
+**Tool:** IBM Bob
+
+**Prompt (summary):** `/develop run kit` — build feature 14 from the scope: PostgreSQL setup steps for Windows, README with run steps and endpoint list, and an Insomnia collection that walks all 12 customer journeys.
+
+**AI output:**
+- `README.md` at the project root: prerequisites table (Java 17, Maven 3.9.4, PostgreSQL 16), step-by-step PostgreSQL setup on Windows (create role, create database), two credential options (env vars and `application-local.properties`), run steps (`mvn clean install`, `mvn spring-boot:run`), expected Flyway migrations on first start, test instructions (`mvn test`, 141 tests), JWT secret override note, full endpoint reference table for all 25 operations grouped by tag, RFC 9457 error format example, project layout overview, Insomnia usage note, and seed data quick reference.
+- `docs/insomnia-collection.json`: Insomnia v4 export with 6 folders matching the customer journeys — Auth (register, login), Account (profile, addresses, recommendations), Catalogue (categories, books search, search by category, full-text search, book detail, related books, authors, publishers), Cart (view, add two books, update quantity, remove item, clear), Orders (setup add to cart, place order with saved address, place order with inline address, history, detail, cancel, buy again), Payments (credit card, debit card, wallet/GCash, UPI). Base environment with `base_url`, `token`, `bookId`, `bookId2`, `orderId`, `addressId`, `publisherId`, `authorId` variables.
+- Scope feature 14 milestones ticked; status set to `done`.
+- `mvn clean install`: 141 tests, 0 failures, BUILD SUCCESS.
+
+**Decisions / choices to review:**
+- README uses Option A (env vars) as the recommended credential approach and Option B (local properties file) as secondary — matches `application.properties` design and `AGENTS.md`.
+- Insomnia collection uses template variables (`{{ token }}`, `{{ bookId }}`) rather than hardcoded values so the reviewer can plug in real IDs after running register/login.
+- Sample card numbers in the Insomnia payment requests are standard Luhn-valid test numbers (Visa 4532015112830366, Mastercard 5425233430109903); no real card data.

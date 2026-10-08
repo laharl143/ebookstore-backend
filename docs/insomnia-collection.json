@@ -1,0 +1,446 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-08T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_bookworm",
+      "_type": "workspace",
+      "name": "Book Worm API",
+      "description": "All 12 customer journeys for the Book Worm e-bookstore backend (capstone).",
+      "scope": "collection"
+    },
+
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_bookworm",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "token": "",
+        "bookId": 1,
+        "bookId2": 9,
+        "orderId": 1,
+        "addressId": 1,
+        "publisherId": 1,
+        "authorId": 1
+      }
+    },
+
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "1. Auth (register + login)"
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "POST /auth/register",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/register",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Secret123!\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Reyes\"\n}"
+      }
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "POST /auth/login",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Secret123!\"\n}"
+      }
+    },
+
+    {
+      "_id": "fld_account",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "2. Account (profile + addresses + recommendations)"
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me — profile and gift points",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_get_addresses",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me/addresses — list saved addresses",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me/addresses",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_save_address",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "POST /me/addresses — save delivery address",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/me/addresses",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Reyes\",\n  \"addressLine\": \"123 Mabini Street\",\n  \"city\": \"Manila\",\n  \"province\": \"Metro Manila\",\n  \"zipCode\": \"1000\",\n  \"phone\": \"+639171234567\",\n  \"isDefault\": true\n}"
+      }
+    },
+    {
+      "_id": "req_recommendations",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me/recommendations — personalised books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me/recommendations?size=12",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+
+    {
+      "_id": "fld_catalogue",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "3. Catalogue (browse + search + detail)"
+    },
+    {
+      "_id": "req_categories",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /categories — all categories",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/categories"
+    },
+    {
+      "_id": "req_books",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books — search all books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?page=0&size=20"
+    },
+    {
+      "_id": "req_books_by_category",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books?category=romance — filter by category",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?category=romance&page=0&size=20"
+    },
+    {
+      "_id": "req_books_search",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books?q=rizal — full-text search",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?q=rizal&page=0&size=10"
+    },
+    {
+      "_id": "req_book_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books/{bookId} — book detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books/{{ bookId }}"
+    },
+    {
+      "_id": "req_related",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books/{bookId}/related — related books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books/{{ bookId }}/related"
+    },
+    {
+      "_id": "req_authors",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /authors — list authors",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/authors?page=0&size=20"
+    },
+    {
+      "_id": "req_author_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /authors/{authorId} — author detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/authors/{{ authorId }}"
+    },
+    {
+      "_id": "req_publishers",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /publishers — list publishers",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/publishers?page=0&size=20"
+    },
+    {
+      "_id": "req_publisher_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /publishers/{publisherId} — publisher detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/publishers/{{ publisherId }}"
+    },
+
+    {
+      "_id": "fld_cart",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "4. Cart (basket management)"
+    },
+    {
+      "_id": "req_get_cart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "GET /cart — view basket",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/cart",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_add_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "POST /cart/items — add book",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId }},\n  \"quantity\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_add_cart_item2",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "POST /cart/items — add second book",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId2 }},\n  \"quantity\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_update_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "PUT /cart/items/{bookId} — change quantity",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/v1/cart/items/{{ bookId }}",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"quantity\": 2\n}"
+      }
+    },
+    {
+      "_id": "req_remove_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "DELETE /cart/items/{bookId} — remove one book",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/cart/items/{{ bookId2 }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_clear_cart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "DELETE /cart — empty basket",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/cart",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+
+    {
+      "_id": "fld_orders",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "5. Orders (checkout + history + cancel + buy again)"
+    },
+    {
+      "_id": "req_add_for_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "(Setup) POST /cart/items — add book before order",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId }},\n  \"quantity\": 1\n}"
+      }
+    },
+    {
+      "_id": "req_create_order_saved_address",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders — place order (saved address, no points)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"addressId\": {{ addressId }},\n  \"redeemPoints\": 0\n}"
+      }
+    },
+    {
+      "_id": "req_create_order_inline_address",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders — place order (inline address)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"shippingAddress\": {\n    \"firstName\": \"Alice\",\n    \"lastName\": \"Reyes\",\n    \"addressLine\": \"456 Bonifacio Ave\",\n    \"city\": \"Quezon City\",\n    \"province\": \"Metro Manila\",\n    \"zipCode\": \"1100\",\n    \"phone\": \"+639171234567\"\n  },\n  \"redeemPoints\": 0\n}"
+      }
+    },
+    {
+      "_id": "req_get_orders",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "GET /orders — order history",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/orders?page=0&size=20",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_get_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "GET /orders/{orderId} — order detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_cancel_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders/{orderId}/cancel — cancel within 48h",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/cancel",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+    {
+      "_id": "req_buy_again",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders/{orderId}/buy-again — buy again",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/buy-again",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ token }}" }]
+    },
+
+    {
+      "_id": "fld_payments",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "6. Payments (simulated payment + confirmation)"
+    },
+    {
+      "_id": "req_pay_credit_card",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId}/payments — credit card",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"CREDIT_CARD\",\n  \"cardNumber\": \"4532015112830366\",\n  \"cardHolderName\": \"ALICE REYES\",\n  \"cvv\": \"123\",\n  \"expiryMonth\": \"12\",\n  \"expiryYear\": \"2028\"\n}"
+      }
+    },
+    {
+      "_id": "req_pay_debit_card",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId}/payments — debit card",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"DEBIT_CARD\",\n  \"cardNumber\": \"5425233430109903\",\n  \"cardHolderName\": \"ALICE REYES\",\n  \"cvv\": \"321\",\n  \"expiryMonth\": \"08\",\n  \"expiryYear\": \"2027\"\n}"
+      }
+    },
+    {
+      "_id": "req_pay_wallet",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId}/payments — wallet (GCash)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"WALLET\",\n  \"walletMobileNumber\": \"+639171234567\"\n}"
+      }
+    },
+    {
+      "_id": "req_pay_upi",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId}/payments — UPI",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        { "name": "Authorization", "value": "Bearer {{ token }}" },
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"UPI\"\n}"
+      }
+    }
+  ]
+}
