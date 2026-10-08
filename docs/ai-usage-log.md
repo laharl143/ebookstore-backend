@@ -279,3 +279,23 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Reconciled scope states. Ready to begin Feature 7 (Book detail).
 
 **Review / changes by me:** _pending_
+
+---
+
+## 15. Book detail and related books feature build (`/develop book detail`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Run `/develop book detail` in IBM Bob to complete Feature 7 per spec 0003: verify and test the book detail endpoint (`GET /api/v1/books/{bookId}`) and related books endpoint (`GET /api/v1/books/{bookId}/related`), and update scope.
+
+**AI output:**
+- Evaluated existing implementation in `BookController`, `BookService`, `BookMapper`, and `BookRepository` against spec 0003 requirements (operations #9 and #10).
+- Confirmed full coverage for `BookDetailResponse` (with other formats, estimated delivery date, author bio, publisher, genre tags, and copies sold) and `getRelatedBooks` ranking (same author priority, shared genre count descending, copies sold descending, id tie-breaker, excluding same-title records).
+- Ran all project integration, slice, and contract tests (91 tests total) with 100% pass rate.
+- Updated `docs/scope/scope.md` marking Feature 7 `Build it` complete.
+
+**Decisions / choices to review:**
+- Confirmed existing implementation fully complies with spec 0003 contract requirements and acceptance criteria.
+- Verified that all error handling mappings (e.g. 404 `BOOK_NOT_FOUND`) and parameter validations conform to the API contract.
+
+**Review / changes by me:** _pending_
