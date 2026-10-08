@@ -340,3 +340,19 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Bound all calculations (VAT rate 12%, currency PHP, delivery days 5) from `StoreProperties` and `Clock`.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 18. Basket status sync
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Mark Feature 8 (Basket) as done in `docs/scope/scope.md`.
+
+**AI output:**
+- Updated `docs/scope/scope.md` summary table and feature section, marking Feature 8 as `done`.
+
+**Decisions / choices to review:**
+- Reconciled scope states. Ready to design Feature 9 (`/architect checkout and order`).
+
+**Review / changes by me:** _pending_

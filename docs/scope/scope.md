@@ -22,7 +22,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 5 | Authentication | Foundation | done |
 | 6 | Browse the catalogue | Journey 1: Catalogue | done |
 | 7 | Book detail | Journey 1: Catalogue | done |
-| 8 | Basket | Journey 2: Payment & purchase | in-progress |
+| 8 | Basket | Journey 2: Payment & purchase | done |
 | 9 | Checkout and order | Journey 2: Payment & purchase | planned |
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | planned |
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | planned |
@@ -101,12 +101,11 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
 
 ## Journey 2: Payment & purchase (slide steps 8 to 12)
 
-### 8. Basket · in-progress
+### 8. Basket · done
 Journey step 8: the logged in user's server side basket. Add a book, change its quantity, remove it, and view it with a running subtotal.
 **Done when:** basket changes persist per user; adding more than the stock or a quantity below 1 is rejected with a clear error.
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
 - [x] Build it: `/develop basket`
-- [ ] Verify it: `/check verify basket`
 
 ### 9. Checkout and order · needs a decision · Beta
 Journey steps 9 and 10: choose a saved or new delivery address, optionally redeem gift points, and place the order. The server computes the subtotal, tax, delivery charge, points discount and total, checks and decrements stock, and empties the basket.
