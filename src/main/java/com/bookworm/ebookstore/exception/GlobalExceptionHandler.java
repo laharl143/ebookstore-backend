@@ -76,6 +76,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ProblemDetail> handleConflictException(ConflictException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        if (ex.getBookIds() != null && !ex.getBookIds().isEmpty()) {
+            problem.setProperty("bookIds", ex.getBookIds());
+        }
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();

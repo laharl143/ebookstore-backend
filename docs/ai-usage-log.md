@@ -315,3 +315,28 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Reconciled scope states. Ready to begin Feature 8 (Basket).
 
 **Review / changes by me:** _pending_
+
+---
+
+## 17. Basket feature build (`/develop basket`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Run `/develop basket` in IBM Bob to build authenticated Cart / Basket endpoints per spec 0003: `GET /api/v1/cart`, `POST /api/v1/cart/items`, `PUT /api/v1/cart/items/{bookId}`, `DELETE /api/v1/cart/items/{bookId}`, and `DELETE /api/v1/cart`.
+
+**AI output:**
+- DTO records: Created `AddCartItemRequest`, `UpdateCartItemRequest`, `CartItemResponse`, and `CartResponse` under `com.bookworm.ebookstore.dto`.
+- Mappings: Created `CartMapper` under `com.bookworm.ebookstore.mapper` computing line totals, subtotal, VAT amount (using store vat-rate 12%), delivery charge preview, maxQuantity per format/stock, and estimated delivery dates.
+- Exceptions: Added `ConflictException` with support for optional `bookIds` array for `INSUFFICIENT_STOCK` (409 Conflict) and mapped in `GlobalExceptionHandler`.
+- Repositories: Enhanced `CartItemRepository` with eager-fetch query `findByUserIdWithBookDetails`, `findByUserIdAndBookId`, and delete methods. Added pessimistic row locking query `findByIdForUpdate` in `UserRepository` for per-user mutation serialization.
+- Services: Implemented `CartService` enforcing check orders (`BOOK_NOT_FOUND` / `CART_ITEM_NOT_FOUND` -> `QUANTITY_LIMIT` -> `INSUFFICIENT_STOCK`), eBook max quantity limit of 1, print book max limit of 10, and pessimistic locking serialization.
+- Controllers: Implemented `CartController` under `/api/v1/cart` extracting authenticated user id from JWT `sub` claim.
+- Test suite: Added `CartControllerTest` (6 MockMvc tests) and `CartServiceIntegrationTest` (9 integration tests). All 106 tests across the project pass clean and green.
+- Scope: Updated `docs/scope/scope.md` ticking `Build it` milestone for Feature 8.
+
+**Decisions / choices to review:**
+- Implemented `ConflictException` carrying `List<Long> bookIds` mapped to RFC 9457 ProblemDetail response for 409 `INSUFFICIENT_STOCK`.
+- Used `userRepository.findByIdForUpdate` to serialize concurrent basket modifications per user.
+- Bound all calculations (VAT rate 12%, currency PHP, delivery days 5) from `StoreProperties` and `Clock`.
+
+**Review / changes by me:** _pending_
