@@ -110,14 +110,14 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
 ### 9. Checkout and order · in-progress · Beta
 Journey steps 9 and 10: choose a saved or new delivery address, optionally redeem gift points, and place the order. The server computes the subtotal, tax, delivery charge, points discount and total, checks and decrements stock, and empties the basket.
 **Done when:** an order is created with correct server side totals and an address snapshot; redeeming more points than the balance or the total is rejected; insufficient stock is rejected and nothing is changed.
-spec [0005](../specs/0005-checkout-and-order/index.md)
+spec [0005](../specs/0005-checkout-and-order/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
 - [x] Design it (spec): `/architect checkout and order`
-- [ ] Build it: `/develop checkout and order`
-   - [ ] DTOs, mappers and class-level address constraint (AC-1, AC-2, AC-5)
-   - [ ] AccountController and AccountService: /me, addresses list and save (AC-7, AC-8, AC-9)
-   - [ ] OrderController stubs and createOrder + getOrderById (AC-1, AC-3, AC-4, AC-5, AC-6, AC-10)
-   - [ ] OrderService: lock, validate, compute totals, stock decrement, points ledger, basket clear (AC-1 to AC-6, AC-10)
-   - [ ] Build passes mvn clean install with no drift failures (AC-1 to AC-10)
+- [x] Build it: `/develop checkout and order`
+   - [x] DTOs, mappers and class-level address constraint (AC-1, AC-2, AC-5)
+   - [x] AccountController and AccountService: /me, addresses list and save (AC-7, AC-8, AC-9)
+   - [x] OrderController stubs and createOrder + getOrderById (AC-1, AC-3, AC-4, AC-5, AC-6, AC-10)
+   - [x] OrderService: lock, validate, compute totals, stock decrement, points ledger, basket clear (AC-1 to AC-6, AC-10)
+   - [x] Build passes mvn clean install with no drift failures (AC-1 to AC-10)
 - [ ] Verify it: /verify checkout and order
 - [ ] Test it: /test checkout and order
 

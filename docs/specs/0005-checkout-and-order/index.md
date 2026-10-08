@@ -1,7 +1,7 @@
 # 0005. Checkout and order
 
 **Date**: 2026-10-14
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

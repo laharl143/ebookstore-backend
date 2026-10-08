@@ -384,3 +384,29 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - All four open decisions were auto-picked as recommended. Review `rationale.md` if any needs revisiting before `/develop`.
 
 **Review / changes by me:** _pending_
+
+## 19. Checkout and order feature build (`/develop checkout and order`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Run `/develop checkout and order` in IBM Bob to implement Journey steps 9 and 10 per spec 0005: DTOs, address handling, gift points redemption, atomic order placement, stock decrement, gift point ledger transaction, and order queries.
+
+**AI output:**
+- DTO records: Created `AddressRequest`, `AddressResponse`, `ShippingAddress`, `CreateOrderRequest` (with custom `@ValidAddressSource` validator), `OrderResponse`, `OrderItemResponse`, `PaymentResponse`, and `OrderPage` in `com.bookworm.ebookstore.dto`.
+- Mappers: Created `AddressMapper` and `OrderMapper` in `com.bookworm.ebookstore.mapper` for clean model-DTO transformations.
+- Repositories: Enhanced `AddressRepository` (with custom default-first sorting and default-flag resetting query), `BookRepository` (with guarded stock decrement query `decrementStockGuarded`), `UserRepository` (with guarded points deduction query `deductGiftPointsGuarded`), and `OrderRepository` (with custom order queries).
+- Services:
+  - `AccountService`: Implemented `getCurrentUser`, `getAddresses`, and `createAddress` (handling default address rules and clearing prior defaults).
+  - `OrderService`: Implemented transactional `createOrder` (user lock via `findByIdForUpdate`, cart validation, address resolution, stock check across all items returning failing book ids on `INSUFFICIENT_STOCK`, points redemption bounds checking, stock decrementing ordered by `book_id`, gift points deduction with `REDEEMED` ledger entry, and basket clearing), `getOrderById`, and `getOrders`.
+- Controllers: Implemented `AccountController` (`/api/v1/me`, `/api/v1/me/addresses`) and `OrderController` (`/api/v1/orders`, `/api/v1/orders/{orderId}`) with `Location` header on 201 creation.
+- Test suite: Added `OrderAndAccountServiceIntegrationTest` (9 integration tests verifying AC-1 through AC-10) and `OrderAndAccountControllerTest` (6 MockMvc slice tests). All 121 tests across the suite passed green.
+- Scope: Updated `docs/scope/scope.md` ticking all milestones under `Build it` for Feature 9.
+
+**Decisions / choices to review:**
+- Created `@ValidAddressSource` class-level constraint ensuring mutually exclusive `addressId` and `shippingAddress` validation with specific `errors["addressId"]` field error reporting.
+- Enforced ascending `book_id` order for stock decrementing to prevent deadlock under concurrent checkout of overlapping items.
+- Bound points value, VAT rate, delivery charge, and currency strictly to `StoreProperties`.
+
+**Review / changes by me:** _pending_
+
+---
