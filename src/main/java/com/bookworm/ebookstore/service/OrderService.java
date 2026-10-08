@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -19,12 +20,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bookworm.ebookstore.config.StoreProperties;
+import com.bookworm.ebookstore.dto.AddedItem;
 import com.bookworm.ebookstore.dto.AddressRequest;
+import com.bookworm.ebookstore.dto.BuyAgainResponse;
 import com.bookworm.ebookstore.dto.CreateOrderRequest;
 import com.bookworm.ebookstore.dto.OrderPage;
 import com.bookworm.ebookstore.dto.OrderResponse;
 import com.bookworm.ebookstore.dto.PaymentRequest;
 import com.bookworm.ebookstore.dto.PurchaseConfirmationResponse;
+import com.bookworm.ebookstore.dto.SkippedItem;
 import com.bookworm.ebookstore.entity.Address;
 import com.bookworm.ebookstore.entity.Book;
 import com.bookworm.ebookstore.entity.BookFormat;
@@ -60,6 +64,7 @@ public class OrderService {
     private final AddressRepository addressRepository;
     private final BookRepository bookRepository;
     private final CartItemRepository cartItemRepository;
+    private final CartService cartService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final GiftPointTransactionRepository giftPointTransactionRepository;
@@ -72,6 +77,7 @@ public class OrderService {
             AddressRepository addressRepository,
             BookRepository bookRepository,
             CartItemRepository cartItemRepository,
+            CartService cartService,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             GiftPointTransactionRepository giftPointTransactionRepository,
@@ -83,6 +89,7 @@ public class OrderService {
         this.addressRepository = addressRepository;
         this.bookRepository = bookRepository;
         this.cartItemRepository = cartItemRepository;
+        this.cartService = cartService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.giftPointTransactionRepository = giftPointTransactionRepository;
@@ -470,6 +477,89 @@ public class OrderService {
                 orderPage.getTotalPages()
         );
     }
+
+    @Transactional
+    public BuyAgainResponse buyAgain(Long userId, Long orderId) {
+        // 1. Load the order (ownership check: 404 if not the caller's order)
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
+
+        OffsetDateTime now = OffsetDateTime.now(clock);
+
+        List<AddedItem> added = new ArrayList<>();
+        List<SkippedItem> skipped = new ArrayList<>();
+
+        // 2. Process each item from the past order
+        for (OrderItem item : order.getItems()) {
+            Book book = item.getBook();
+            if (book == null) {
+                continue;
+            }
+
+            String title = item.getTitle();
+            Long bookId = book.getId();
+            int requestedQty = item.getQuantity();
+
+            // eBook: skip if already in cart (limit of 1)
+            if (book.getFormat() == BookFormat.EBOOK) {
+                boolean alreadyInCart = cartItemRepository.findByUserIdAndBookId(userId, bookId).isPresent();
+                if (alreadyInCart) {
+                    skipped.add(new SkippedItem(bookId, title, "LIMIT_REACHED"));
+                    continue;
+                }
+                // Add ebook with quantity 1
+                CartItem cartItem = new CartItem();
+                cartItem.setUser(order.getUser());
+                cartItem.setBook(book);
+                cartItem.setQuantity(1);
+                cartItem.setCreatedAt(now);
+                cartItem.setUpdatedAt(now);
+                cartItemRepository.save(cartItem);
+                added.add(new AddedItem(bookId, title, 1));
+                continue;
+            }
+
+            // Physical book: check stock
+            if (book.getStockQuantity() == 0) {
+                skipped.add(new SkippedItem(bookId, title, "OUT_OF_STOCK"));
+                continue;
+            }
+
+            // Determine how many we can actually add
+            int currentCartQty = cartItemRepository.findByUserIdAndBookId(userId, bookId)
+                    .map(CartItem::getQuantity).orElse(0);
+            int maxAddable = Math.min(10 - currentCartQty, book.getStockQuantity());
+            if (maxAddable <= 0) {
+                skipped.add(new SkippedItem(bookId, title, "LIMIT_REACHED"));
+                continue;
+            }
+
+            int qtyToAdd = Math.min(requestedQty, maxAddable);
+            int newTotalQty = currentCartQty + qtyToAdd;
+
+            Optional<CartItem> existingOpt = cartItemRepository.findByUserIdAndBookId(userId, bookId);
+            if (existingOpt.isPresent()) {
+                CartItem existing = existingOpt.get();
+                existing.setQuantity(newTotalQty);
+                existing.setUpdatedAt(now);
+                cartItemRepository.save(existing);
+            } else {
+                CartItem cartItem = new CartItem();
+                cartItem.setUser(order.getUser());
+                cartItem.setBook(book);
+                cartItem.setQuantity(newTotalQty);
+                cartItem.setCreatedAt(now);
+                cartItem.setUpdatedAt(now);
+                cartItemRepository.save(cartItem);
+            }
+            added.add(new AddedItem(bookId, title, qtyToAdd));
+        }
+
+        // 3. Return updated cart with summary
+        return new BuyAgainResponse(cartService.getCart(userId), added, skipped);
+    }
+
+
 
     /**
      * Validates card-specific fields for CREDIT_CARD and DEBIT_CARD methods.

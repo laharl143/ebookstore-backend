@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bookworm.ebookstore.dto.BuyAgainResponse;
 import com.bookworm.ebookstore.dto.CreateOrderRequest;
 import com.bookworm.ebookstore.dto.OrderPage;
 import com.bookworm.ebookstore.dto.OrderResponse;
@@ -82,6 +83,15 @@ public class OrderController {
         Long userId = getUserId(jwt);
         OrderResponse response = orderService.cancelOrder(userId, orderId);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{orderId}/buy-again")
+    public ResponseEntity<BuyAgainResponse> buyAgain(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long orderId
+    ) {
+        Long userId = getUserId(jwt);
+        return ResponseEntity.ok(orderService.buyAgain(userId, orderId));
     }
 
     private Long getUserId(Jwt jwt) {

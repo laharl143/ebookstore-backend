@@ -499,3 +499,27 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+
+## 24. Order history and Buy It Again (`/develop order history and buy it again`)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** `/develop order history and buy it again` — build Feature 12 from the scope.
+
+**AI output:**
+- Investigated the codebase: confirmed `getOrders` (GET `/api/v1/orders`) and `getOrderById` were already implemented in `OrderService` and `OrderController` from earlier features.
+- Confirmed the OpenAPI contract already defines both `getOrders` and `buyAgain` (POST `/api/v1/orders/{orderId}/buy-again`) with `BuyAgainResponse`, `AddedItem`, and `SkippedItem` schemas.
+- Created three new DTOs: `AddedItem`, `SkippedItem`, `BuyAgainResponse` in `src/main/java/com/bookworm/ebookstore/dto/`.
+- Added `CartService` dependency injection to `OrderService` (no circular dependency; `CartService` does not depend on `OrderService`).
+- Implemented `buyAgain(Long userId, Long orderId)` in `OrderService`: loads the order with ownership check (404 if not caller's), iterates order items, skips eBooks already in cart (`LIMIT_REACHED`), skips physical books with zero stock (`OUT_OF_STOCK`), caps quantities at the 10-item print limit, saves new or updated cart items, returns `BuyAgainResponse` with the refreshed cart plus `added` and `skipped` lists.
+- Added `POST /api/v1/orders/{orderId}/buy-again` handler to `OrderController` returning 200.
+- Ran `mvn clean install`: 141 tests, 0 failures, BUILD SUCCESS. Contract drift test passed.
+- Ticked all Build it milestones in `docs/scope/scope.md` and added code pointer.
+
+**Decisions / choices to review:**
+- When a physical book's quantity in the past order exceeds the remaining cart headroom (10 minus current quantity), the available headroom is added rather than skipping entirely; only if headroom is zero does it skip with `LIMIT_REACHED`. This gives the user as much as possible.
+- `getOrders` was already complete from Feature 10; only `buyAgain` was net-new code.
+
+**Review / changes by me:** _pending_
+
+---
