@@ -29,7 +29,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | done |
 | 13 | Recommendations | Journey 3: E-store Home | done |
 | 14 | Run kit (Postgres setup, README, Insomnia) | Submission | done |
-| 15 | Git branch and pull request | Submission | planned |
+| 15 | Git branch and pull request | Submission | done |
 | 16 | Walkthrough video, report and submission | Submission | planned |
 
 ## Foundations
@@ -173,10 +173,10 @@ code in `README.md`, `docs/insomnia-collection.json`
    - [x] README.md: PostgreSQL Windows setup, env vars, run steps, endpoint list
    - [x] Insomnia collection: all 12 journeys
 
-### 15. Git branch and pull request
-A personal GitHub repo with the work on `feature/api-implementation` and a pull request whose description carries the API documentation. Your manager is added as a collaborator.
+### 15. Git branch and pull request · done
+A personal GitHub repo with the work on `feature/api-implementation` and a pull request whose description carries the API documentation.
 **Done when:** the PR is open against `main` with the endpoint list, run steps and a link to the OpenAPI file.
-- [ ] Write the PR: `/document pr`
+- [x] Write the PR: `/document pr` (PR #1 open at https://github.com/laharl143/ebookstore-backend/pull/1)
 
 ### 16. Walkthrough video, report and submission
 The required deliverable is a short video (about 3 minutes) explaining the steps taken with the agentic IDE, submitted with the GitHub repo link (slide 12 and the AI review page). An optional `Capstone-Report.pdf` (5 to 8 pages) can be attached as backup: the AI workflow with screenshots, the API design, proof that it runs and test results. `docs/ai-usage-log.md` is kept current at every step and is the script source.
