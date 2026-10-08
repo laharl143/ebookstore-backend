@@ -484,3 +484,18 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+## 23. Cancel within 48 hours status sync
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Mark Feature 11 (Cancel within 48 hours) as done in `docs/scope/scope.md`.
+
+**AI output:**
+- Updated `docs/scope/scope.md` summary table and feature section, marking Feature 11 as `done`.
+
+**Decisions / choices to review:**
+- Scope reconciled. Ready to develop Feature 12 (`/develop order history and buy it again`).
+
+**Review / changes by me:** _pending_
+
+---

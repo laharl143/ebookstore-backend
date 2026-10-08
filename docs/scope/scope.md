@@ -25,7 +25,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 8 | Basket | Journey 2: Payment & purchase | done |
 | 9 | Checkout and order | Journey 2: Payment & purchase | done |
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | done |
-| 11 | Cancel within 48 hours | Journey 2: Payment & purchase | planned |
+| 11 | Cancel within 48 hours | Journey 2: Payment & purchase | done |
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | planned |
 | 13 | Recommendations | Journey 3: E-store Home | planned |
 | 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
@@ -132,7 +132,7 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
    - [x] getOrderById and getOrders updated to include payment data
    - [x] Service integration tests and controller tests (133 tests, BUILD SUCCESS)
 
-### 11. Cancel within 48 hours · Beta
+### 11. Cancel within 48 hours · Beta · done
 Journey step 12: the customer cancels a confirmed order within 48 hours, before it ships. The payment is marked refunded and stock and gift points are restored.
 **Done when:** a cancel inside the window succeeds and restores stock and points; a cancel after 48 hours, on a shipped order, or on someone else's order is rejected.
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository,mapper}/`
