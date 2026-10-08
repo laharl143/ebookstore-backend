@@ -74,6 +74,11 @@ class GlobalExceptionHandlerTest {
         public String notFound() {
             throw new ResourceNotFoundException(ApiErrorCode.BOOK_NOT_FOUND, "Book not found with ID 999");
         }
+
+        @GetMapping("/server-error")
+        public String serverError() {
+            throw new RuntimeException("Unexpected database failure");
+        }
     }
 
     @Test
@@ -127,5 +132,16 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType("application/problem+json"))
                 .andExpect(jsonPath("$.code", is("VALIDATION_FAILED")));
+    }
+
+    @Test
+    @DisplayName("AC-4: Unhandled exception returns 500 INTERNAL_ERROR with request URI instance")
+    void unhandledExceptionReturns500() throws Exception {
+        mockMvc.perform(get("/test/server-error"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType("application/problem+json"))
+                .andExpect(jsonPath("$.code", is("INTERNAL_ERROR")))
+                .andExpect(jsonPath("$.title", is("Internal server error")))
+                .andExpect(jsonPath("$.instance", is("/test/server-error")));
     }
 }

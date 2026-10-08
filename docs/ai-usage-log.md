@@ -643,3 +643,34 @@ Tests:
 - The service test for the declined-card scenario verifies only the exception type and `transactionId`; it does not assert the FAILED row in the DB because the test-level `@Transactional` prevents the `REQUIRES_NEW` sub-transaction from seeing the uncommitted order row. The 402 HTTP response and `transactionId` in the body are covered by the controller test.
 
 **Review / changes by me:** _pending_
+
+## 26. Follow-up bug fixes after end-to-end run (spec 0002 and 0003)
+
+**Date:** 2026-10-08
+
+**Tool:** IBM Bob
+
+**Prompt (summary):** Follow up fixes after an end to end run:
+1. Bug 1: Orders with declined attempts returning 500 across GET/cancel operations due to `PaymentRepository.findByOrderId` returning non-unique result. Replace with spec 0003 sourcing (SUCCESS/REFUNDED first, else latest FAILED ordered by `created_at` desc then `id` desc, else none). Cancel must refund only SUCCESS payment.
+2. Bug 2: `copies_sold` never changes. Ensure `copies_sold` increases by line quantity on payment (eBooks included) and decreases on cancel for CONFIRMED orders using guarded single-statement updates in `BookRepository` in ascending `book_id` order with `flushAutomatically = true`.
+3. Bug 3: Unexpected errors logged in `GlobalExceptionHandler` fallback (`INTERNAL_ERROR`) with `log.error` including request URI and stack trace.
+4. Add regression tests, keep `mvn clean install` green, log and commit.
+
+**AI output:**
+- Sourced representative payment per order according to spec 0003 in `PaymentRepository` (`findRepresentativePaymentForOrder`, `findByOrderIdAndStatus`, `findByOrderIdOrderByCreatedAtDescIdDesc`, and `findByOrderIdAndStatusIn`).
+- Updated `OrderService` to use representative payment sourcing for `getOrderById` and `getOrders`.
+- Updated `OrderService.cancelOrder` to locate and refund only `PaymentStatus.SUCCESS` records.
+- Added `@Modifying(flushAutomatically = true, clearAutomatically = true)` queries `incrementCopiesSold` and `decrementCopiesSoldGuarded` to `BookRepository`.
+- Wired `OrderService.processPayment` to increment `copies_sold` for all order items in ascending `book_id` order upon successful payment.
+- Wired `OrderService.cancelOrder` to decrement `copies_sold` for all items in ascending `book_id` order when cancelling CONFIRMED orders.
+- Verified `GlobalExceptionHandler` logs unhandled server errors at error level with request URI and stack trace, and returns RFC 9457 ProblemDetail response with status 500 and code `INTERNAL_ERROR`.
+- Added end-to-end regression integration tests in `PaymentServiceIntegrationTest` (covering card decline attempt followed by successful payment, GET order detail/list queries, order cancellation, and `copies_sold` increment/decrement lifecycle) and `GlobalExceptionHandlerTest`.
+- Ran full test suite: 146 tests passed with 0 failures and 0 errors.
+
+**Decisions / choices to review:**
+- Implemented `PaymentRepository.findRepresentativePaymentForOrder` default interface method to centralize the priority query (SUCCESS/REFUNDED preferred, fallback to latest FAILED).
+- Handled `copies_sold` decrement with `Math.max(0, b.copies_sold - :quantity)` guard in JPQL to guarantee `copies_sold` never drops below zero.
+
+**Review / changes by me:** _pending_
+
+---

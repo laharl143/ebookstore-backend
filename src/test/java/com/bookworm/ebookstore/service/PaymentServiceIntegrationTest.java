@@ -72,7 +72,7 @@ class PaymentServiceIntegrationTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setEmail("payment.test@example.ph");
+        testUser.setEmail("payment.test." + System.nanoTime() + "@example.ph");
         testUser.setPasswordHash("$2a$10$abcdefghijklmnopqrstuvwxyz1234567890123456789012");
         testUser.setFirstName("Maria");
         testUser.setLastName("Santos");
@@ -452,7 +452,7 @@ class PaymentServiceIntegrationTest {
         assertThat(dbOrder.getCancelledAt()).isNotNull();
 
         // Check payment in DB has refundedAt
-        com.bookworm.ebookstore.entity.Payment dbPayment = paymentRepository.findByOrderId(orderId).orElseThrow();
+        com.bookworm.ebookstore.entity.Payment dbPayment = paymentRepository.findRepresentativePaymentForOrder(orderId).orElseThrow();
         assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
         assertThat(dbPayment.getRefundedAt()).isNotNull();
 
@@ -525,4 +525,98 @@ class PaymentServiceIntegrationTest {
         assertThat(stockAfterFirstCancel).isEqualTo(initialStock);
     }
 
+    @Test
+    @DisplayName("Decline card then pay with success card: getOrder, getOrders, cancel all succeed and track copies_sold")
+    void declinedPaymentThenSuccessfulPayment_orderAndCopiesSoldLifecycle() {
+        Book physicalBook = bookRepository.findAll().stream()
+                .filter(b -> b.getFormat() != BookFormat.EBOOK && b.getStockQuantity() >= 5)
+                .findFirst()
+                .orElseThrow();
+        int initialCopiesSold = physicalBook.getCopiesSold();
+
+        // 1. Add item to cart and place order
+        CartItem cartItem = new CartItem();
+        cartItem.setUser(testUser);
+        cartItem.setBook(physicalBook);
+        cartItem.setQuantity(2);
+        cartItem.setCreatedAt(OffsetDateTime.now());
+        cartItem.setUpdatedAt(OffsetDateTime.now());
+        cartItemRepository.save(cartItem);
+
+        var orderResponse = orderService.createOrder(testUser.getId(),
+                new CreateOrderRequest(savedAddress.getId(), null, false, 0));
+        Long orderId = orderResponse.id();
+
+        // 2. Simulate failed payment row directly (mimicking card ending 0002 decline record)
+        com.bookworm.ebookstore.entity.Order order = orderRepository.findById(orderId).orElseThrow();
+        com.bookworm.ebookstore.entity.Payment failedPayment = new com.bookworm.ebookstore.entity.Payment();
+        failedPayment.setOrder(order);
+        failedPayment.setMethod(PaymentMethod.CREDIT_CARD);
+        failedPayment.setAmount(order.getTotalAmount());
+        failedPayment.setStatus(PaymentStatus.FAILED);
+        failedPayment.setCardLast4("0002");
+        failedPayment.setTransactionId(java.util.UUID.randomUUID().toString());
+        failedPayment.setFailureReason("Card declined");
+        failedPayment.setCreatedAt(OffsetDateTime.now());
+        paymentRepository.save(failedPayment);
+
+        // Order is still PENDING_PAYMENT, copies_sold unchanged
+        Book bookAfterDecline = bookRepository.findById(physicalBook.getId()).orElseThrow();
+        assertThat(bookAfterDecline.getCopiesSold()).isEqualTo(initialCopiesSold);
+
+        // GET order shows the FAILED payment
+        var orderAfterDecline = orderService.getOrderById(testUser.getId(), orderId);
+        assertThat(orderAfterDecline.payment()).isNotNull();
+        assertThat(orderAfterDecline.payment().status()).isEqualTo(PaymentStatus.FAILED);
+
+        // 3. Pay with successful card 4242424242424242 -> SUCCESS
+        PaymentRequest successCard = new PaymentRequest(
+                PaymentMethod.CREDIT_CARD,
+                "4242424242424242",
+                "Maria Santos",
+                "123",
+                "12/2030",
+                null
+        );
+        PurchaseConfirmationResponse confirmation = orderService.processPayment(testUser.getId(), orderId, successCard);
+        assertThat(confirmation.payment().status()).isEqualTo(PaymentStatus.SUCCESS);
+        assertThat(confirmation.order().status()).isEqualTo(OrderStatus.CONFIRMED);
+
+        // copies_sold increased by 2
+        Book bookAfterSuccess = bookRepository.findById(physicalBook.getId()).orElseThrow();
+        assertThat(bookAfterSuccess.getCopiesSold()).isEqualTo(initialCopiesSold + 2);
+
+        // GET order and GET order list both succeed and show SUCCESS payment (not the failed one)
+        var orderAfterSuccess = orderService.getOrderById(testUser.getId(), orderId);
+        assertThat(orderAfterSuccess.payment()).isNotNull();
+        assertThat(orderAfterSuccess.payment().status()).isEqualTo(PaymentStatus.SUCCESS);
+
+        var orderList = orderService.getOrders(testUser.getId(), null, 0, 10);
+        assertThat(orderList.items()).isNotEmpty();
+        var listedOrder = orderList.items().stream()
+                .filter(o -> o.id().equals(orderId))
+                .findFirst()
+                .orElseThrow();
+        assertThat(listedOrder.payment()).isNotNull();
+        assertThat(listedOrder.payment().status()).isEqualTo(PaymentStatus.SUCCESS);
+
+        // 4. Cancel the order -> cancel succeeds, copies_sold reverts by 2, and only SUCCESS payment is REFUNDED
+        var cancelledOrder = orderService.cancelOrder(testUser.getId(), orderId);
+        assertThat(cancelledOrder.status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(cancelledOrder.payment()).isNotNull();
+        assertThat(cancelledOrder.payment().status()).isEqualTo(PaymentStatus.REFUNDED);
+
+        Book bookAfterCancel = bookRepository.findById(physicalBook.getId()).orElseThrow();
+        assertThat(bookAfterCancel.getCopiesSold()).isEqualTo(initialCopiesSold);
+
+        // Verify payments in database: one REFUNDED, one FAILED
+        List<com.bookworm.ebookstore.entity.Payment> allPayments = paymentRepository.findAll().stream()
+                .filter(p -> p.getOrder().getId().equals(orderId))
+                .toList();
+        assertThat(allPayments).hasSize(2);
+        long refundedCount = allPayments.stream().filter(p -> p.getStatus() == PaymentStatus.REFUNDED).count();
+        long failedCount = allPayments.stream().filter(p -> p.getStatus() == PaymentStatus.FAILED).count();
+        assertThat(refundedCount).isEqualTo(1);
+        assertThat(failedCount).isEqualTo(1);
+    }
 }

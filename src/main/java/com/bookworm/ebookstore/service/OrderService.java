@@ -338,7 +338,15 @@ public class OrderService {
         order.setUpdatedAt(now);
         Order savedOrder = orderRepository.save(order);
 
-        // 9. Credit gift points to user and write ledger row
+        // 9. Increment copies_sold for each ordered book (in ascending book_id order, eBooks included)
+        List<OrderItem> sortedOrderItems = savedOrder.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getBook().getId()))
+                .toList();
+        for (OrderItem item : sortedOrderItems) {
+            bookRepository.incrementCopiesSold(item.getBook().getId(), item.getQuantity());
+        }
+
+        // 10. Credit gift points to user and write ledger row
         if (pointsEarned > 0) {
             com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
                     .orElseThrow(() -> new AuthenticationException("User not found"));
@@ -416,14 +424,19 @@ public class OrderService {
             giftPointTransactionRepository.save(gpt);
         }
 
-        // 6. If previously CONFIRMED: refund payment (set refundedAt) and reverse earned points
+        // 6. If previously CONFIRMED: refund payment (set refundedAt), reverse earned points, and decrement copies_sold
         Payment payment = null;
         if (previousStatus == OrderStatus.CONFIRMED) {
-            payment = paymentRepository.findByOrderId(orderId).orElse(null);
+            payment = paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.SUCCESS).orElse(null);
             if (payment != null) {
                 payment.setStatus(PaymentStatus.REFUNDED);
                 payment.setRefundedAt(now);
                 paymentRepository.save(payment);
+            }
+
+            // Decrement copies_sold for each ordered book (in ascending book_id order, eBooks included)
+            for (OrderItem item : sortedItems) {
+                bookRepository.decrementCopiesSoldGuarded(item.getBook().getId(), item.getQuantity());
             }
 
             int pointsEarned = savedOrder.getGiftPointsEarned();
@@ -457,7 +470,7 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
 
         OffsetDateTime now = OffsetDateTime.now(clock);
-        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+        Payment payment = paymentRepository.findRepresentativePaymentForOrder(orderId).orElse(null);
         return OrderMapper.toResponse(order, payment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
     }
 
@@ -474,7 +487,7 @@ public class OrderService {
         OffsetDateTime now = OffsetDateTime.now(clock);
         List<OrderResponse> responses = orderPage.getContent().stream()
                 .map(order -> {
-                    Payment payment = paymentRepository.findByOrderId(order.getId()).orElse(null);
+                    Payment payment = paymentRepository.findRepresentativePaymentForOrder(order.getId()).orElse(null);
                     return OrderMapper.toResponse(order, payment, storeProperties.currency(), storeProperties.cancelWindowHours(), now);
                 })
                 .toList();

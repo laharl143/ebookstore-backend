@@ -23,6 +23,14 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     @Query("UPDATE Book b SET b.stockQuantity = b.stockQuantity + :quantity WHERE b.id = :id")
     void incrementStock(@Param("id") Long id, @Param("quantity") int quantity);
 
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Book b SET b.copiesSold = b.copiesSold + :quantity WHERE b.id = :id")
+    void incrementCopiesSold(@Param("id") Long id, @Param("quantity") int quantity);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Book b SET b.copiesSold = b.copiesSold - :quantity WHERE b.id = :id AND b.copiesSold >= :quantity")
+    int decrementCopiesSoldGuarded(@Param("id") Long id, @Param("quantity") int quantity);
+
     /**
      * Returns all books purchased by the user in orders with the given statuses.
      * Used by the recommendations service to build the candidate scoring set.
