@@ -356,3 +356,31 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Reconciled scope states. Ready to design Feature 9 (`/architect checkout and order`).
 
 **Review / changes by me:** _pending_
+
+---
+
+## 19. Checkout and order spec (architect)
+
+**Date:** 2026-10-14
+
+**Prompt (summary):** `/architect checkout and order` — design feature 9, write the spec in `docs/specs/0005-checkout-and-order/`.
+
+**AI output:**
+- Read `docs/scope/scope.md`, all four prior spec `index.md` files, `openapi.yaml`, `CartService`, `Order` entity, `ApiErrorCode`, and `CartController` to understand the existing code surface.
+- Listed every decision needed; identified 10 already settled by specs 0002 and 0003 (schema, totals formula, address input shape, error codes, OrderResponse, user row lock).
+- Four open decisions all taken as recommended (user said "pick recommended for all"):
+  1. Collect all failing stock `bookIds` before throwing (not fail-fast).
+  2. Single transaction for order creation; address save inside same transaction.
+  3. First-address auto-default rule applies at checkout `saveAddress = true` too.
+  4. `AccountController` hosts `/me`, `/me/addresses` and `/me/recommendations`.
+- Wrote `docs/specs/0005-checkout-and-order/index.md`: 10 ACs, 7 build steps, 23-row value sourcing table, key invariants, critical test scenarios, follow-up.
+- Wrote `docs/specs/0005-checkout-and-order/rationale.md`: 3 options considered, full decision log.
+- Self-check: all 10 ACs covered by build plan steps; all 23 value sourcing rows have a named source.
+- Updated `docs/scope/scope.md`: ticked spec box, removed "needs a decision", added spec link, added Build/Verify/Test boxes with 5 milestone sub-boxes, set status to `in-progress`.
+
+**Tool:** IBM Bob
+
+**Decisions / choices to review:**
+- All four open decisions were auto-picked as recommended. Review `rationale.md` if any needs revisiting before `/develop`.
+
+**Review / changes by me:** _pending_
