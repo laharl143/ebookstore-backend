@@ -702,3 +702,15 @@ Tests:
 - `docs/video-script.md` rewritten for about 3 minutes: both tools named honestly (Claude Code designed and verified, IBM Bob built), the corrected Insomnia flow, the bug story from the end to end runs, and the submission text.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 34. Capstone report PDF (Claude Code)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** I asked Claude Code to assemble the optional `Capstone-Report.pdf`.
+
+**AI output:** `docs/Capstone-Report.pdf`, 9 A4 pages (a cover plus 8 content pages): scope and approach, how AI was used (the Claude Code and IBM Bob split, the shared `.bob` workflow, the spec cross checks, what I decided versus what was auto picked), architecture and data model, API design, proof that it runs (the 40 of 40 live run, the database rows, Swagger), testing (146 tests and the bugs only the live runs caught), and lessons and limits. Built from the repo facts and the screenshots in `docs/screenshots/`, written as HTML and printed to PDF with headless Microsoft Edge (no new libraries installed).
+
+**Review / changes by me:** _pending (read the report before submitting)_

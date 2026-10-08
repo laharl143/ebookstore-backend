@@ -183,7 +183,7 @@ The required deliverable is a short video (about 3 minutes) explaining the steps
 **Done when:** the video is recorded and shows the AI workflow, the OpenAPI spec, the app starting, Insomnia calls, database rows and `mvn test`; the repo and PR links plus a 4 to 6 sentence summary are ready for the text field; screenshots in `docs/screenshots/` back it up.
 - [x] Write the video script from the AI usage log
 - [ ] Record the video (about 3 minutes)
-- [ ] Optional: assemble `Capstone-Report.pdf`
+- [x] Optional: assemble `Capstone-Report.pdf` (docs/Capstone-Report.pdf, 9 pages)
 
 ## Deferred
 Outside the 12 journeys, kept so the plan stays honest. Any of them can come back as a later release.
