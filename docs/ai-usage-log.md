@@ -299,3 +299,19 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Verified that all error handling mappings (e.g. 404 `BOOK_NOT_FOUND`) and parameter validations conform to the API contract.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 16. Book detail status sync
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Mark Feature 7 (Book detail) as done in `docs/scope/scope.md`.
+
+**AI output:**
+- Updated `docs/scope/scope.md` summary table and feature section, setting Feature 7 status to `done`.
+
+**Decisions / choices to review:**
+- Reconciled scope states. Ready to begin Feature 8 (Basket).
+
+**Review / changes by me:** _pending_

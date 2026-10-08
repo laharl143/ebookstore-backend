@@ -21,7 +21,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 4 | API contract (OpenAPI) | Foundation | done |
 | 5 | Authentication | Foundation | done |
 | 6 | Browse the catalogue | Journey 1: Catalogue | done |
-| 7 | Book detail | Journey 1: Catalogue | in-progress |
+| 7 | Book detail | Journey 1: Catalogue | done |
 | 8 | Basket | Journey 2: Payment & purchase | planned |
 | 9 | Checkout and order | Journey 2: Payment & purchase | planned |
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | planned |
@@ -93,12 +93,11 @@ Public browsing: list categories, list books in a category, search by text with 
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto}/`
 - [x] Build it: `/develop browse the catalogue`
 
-### 7. Book detail · in-progress
+### 7. Book detail · done
 One book with everything the product page shows (covers, author with bio, publisher, format, genre tags, price, stock, copies sold, delivery date) plus related books (same genre or author, excluding itself).
 **Done when:** detail and related calls return the right book and a related list; an unknown id returns 404.
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto}/`
 - [x] Build it: `/develop book detail`
-- [ ] Verify it: `/check verify book detail`
 
 ## Journey 2: Payment & purchase (slide steps 8 to 12)
 
