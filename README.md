@@ -108,7 +108,7 @@ mvn test
 ```
 
 Tests run on H2 in PostgreSQL mode — no external database required.  
-Expected result: **141 tests, 0 failures**.
+Expected result: **146 tests, 0 failures**.
 
 ---
 
@@ -229,9 +229,14 @@ docs/                         Specs, scope, AI usage log, data model
 
 Import `docs/insomnia-collection.json` into [Insomnia](https://insomnia.rest) to run all 12 customer journeys end to end.
 
-The collection uses environment variables `base_url`, `token`, `bookId`, `orderId` and `addressId`.  
-Set `base_url` to `http://localhost:8080` before running.  
-Run the requests in folder order: Auth first, then Catalogue, Cart, Orders, and Payments.
+The collection uses the environment variables `base_url`, `token`, `bookId`, `bookId2`, `authorId`, `publisherId`, `orderId` and `orderId2`.
+
+1. Set `base_url` to `http://localhost:8080`.
+2. Run the folders in order, 1 to 6. After **Log in**, copy `accessToken` into `token`.
+3. In folder 5, after **place order**, copy the order `id` into `orderId`. In folder 6, after **second order**, copy its `id` into `orderId2`.
+4. Two calls fail on purpose: the declined card (`4000000000000002`) returns 402, and the second cancel returns 409.
+
+The whole collection (33 requests) was run against the app on 2026-10-08 and every request returned the expected status.
 
 ---
 

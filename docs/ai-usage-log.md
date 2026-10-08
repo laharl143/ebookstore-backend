@@ -687,3 +687,18 @@ Tests:
 **What this shows about the AI workflow:** the first Bob fix passed its own tests but surfaced a new bug (two payment rows made order reads crash). Only the live run against the real database caught it, so running the app end to end after AI generated changes was worth it.
 
 **Review / changes by me:** _pending_
+
+---
+
+## 33. PR description, Insomnia collection and video script (Claude Code)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** I asked Claude Code to fix the PR description, then to check the video script against what really happened.
+
+**AI output:**
+- PR #1 description and title rewritten: removed a false line saying `local-db-setup.sql` was committed (it never was), 146 tests, the real payment methods and decline card, a "How AI was used" section, and the end to end evidence.
+- While checking the script, found that `docs/insomnia-collection.json` was broken: wrong field names (`addressLine`, `redeemPoints`, `expiryMonth`, `WALLET`), an invalid `UPI` request, and folders that cancelled the order before paying it. Rebuilt folders 5 and 6 and ran all 33 requests against the live app in folder order: 33 of 33 returned the expected status. README Insomnia steps and test count updated.
+- `docs/video-script.md` rewritten for about 3 minutes: both tools named honestly (Claude Code designed and verified, IBM Bob built), the corrected Insomnia flow, the bug story from the end to end runs, and the submission text.
+
+**Review / changes by me:** _pending_

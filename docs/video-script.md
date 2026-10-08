@@ -1,124 +1,90 @@
 # Walkthrough video script
 
-Target length: about 3 minutes.
-Record your screen. Talk through each section as you go.
-The sections below are what to show on screen and what to say.
+Target length: about 3 minutes (7 sections, timings add up to 2:55).
+Record your screen and talk through each section. "Show" is what is on screen, "Say" is what you say.
+
+Before you record:
+- Start PostgreSQL, run `mvn clean install` once, and close other apps that use port 8080.
+- Open these ready in tabs: IBM Bob, Claude Code, `docs/ai-usage-log.md`, `src/main/resources/openapi.yaml`, Insomnia with `docs/insomnia-collection.json` imported, psql, and the PR page.
+- In Insomnia, set `base_url` to `http://localhost:8080`.
 
 ---
 
-## Section 1 — Open IBM Bob and show a command running (about 40 seconds)
+## 1. How I used AI (35 seconds)
 
-**Show on screen:** IBM Bob open in VS Code or the browser, this chat window visible.
+**Show:** Claude Code with the `docs/specs/` folder, then IBM Bob with a `/develop` task, then scroll `docs/ai-usage-log.md`.
 
 **Say:**
+"I built this with two agentic tools. In Claude Code I designed the project first: the stack, the data model and the API contract, each written as a spec and cross checked by a second model. Then I moved to IBM Bob. I gave Bob a small workflow in the `.bob` folder, with commands like `/develop basket`, and Bob built each journey from the specs, ran the tests and committed. Every prompt and decision, and which tool made it, is in this AI usage log."
 
-"I built this project using IBM Bob, the agentic IDE from IBM. Bob runs inside VS Code and takes slash commands to design, build, and verify features one at a time.
+## 2. The API contract (20 seconds)
 
-For example, when I ran `/develop basket`, Bob read the API contract, checked what already existed in the codebase, implemented the shopping cart service and controller, ran the tests, and committed the result. Every step is logged in `docs/ai-usage-log.md`, which has 26 entries covering the entire build."
-
-**Show on screen:** Briefly scroll through `docs/ai-usage-log.md` in VS Code so the entries are visible.
-
----
-
-## Section 2 — Show the API contract (about 30 seconds)
-
-**Show on screen:** Open `src/main/resources/openapi.yaml` in VS Code. Scroll slowly through the paths section.
+**Show:** `openapi.yaml`, scroll the paths slowly.
 
 **Say:**
+"The project is API first. This OpenAPI 3.0.3 file was written before the controllers. It has 25 operations in 6 groups, one error format, and JWT security. A drift test in the build fails if a controller is not in this file."
 
-"The project is built API first. Before writing any Java code, I wrote this OpenAPI 3.0.3 specification by hand. It defines 25 operations across 6 tags: Auth, Account, Catalogue, Cart, Orders, and Payments. Every controller had to match this file, and a drift test in the build fails if they drift apart."
+## 3. Start the app and Swagger UI (20 seconds)
 
----
-
-## Section 3 — Start the app and show Swagger UI (about 30 seconds)
-
-**Show on screen:** A terminal. Run `mvn spring-boot:run`. Wait for the "Started EbookstoreApplication" log line.
+**Show:** A terminal running `mvn spring-boot:run` until "Started EbookstoreApplication". Then open `http://localhost:8080/swagger-ui.html`.
 
 **Say:**
+"Starting the app against PostgreSQL. Flyway applies two migrations, 13 tables and a seed catalogue of 27 books priced in pesos. Swagger UI shows the same contract, so a reviewer can try any endpoint here."
 
-"Starting the app. Flyway runs two migrations automatically: the schema with 13 tables, and the seed data with 27 books."
+## 4. Customer journeys in Insomnia (45 seconds)
 
-**Then switch to a browser and open `http://localhost:8080/swagger-ui.html`.**
+**Show:** Insomnia. Run these, pausing on each response:
+1. Folder 1: **Register**, then **Log in**. Copy `accessToken` into `token`.
+2. Folder 3: **GET /books?category=romance**.
+3. Folder 5: **add book**, then **place order**. Copy the `id` into `orderId`.
+4. **Declined card**: show the 402 `PAYMENT_DECLINED`.
+5. **Credit card**: show the purchase confirmation with the books bought.
+6. Folder 6: **second order**, copy its `id` into `orderId2`, pay with **e-wallet**, then **cancel**.
 
 **Say:**
+"Register and log in to get a token. Browse the catalogue without one. Add a book and place the order: the server computes the subtotal, 12 percent VAT and the total, never the client. A test card ending in 0002 is declined with a clear error, and a valid card confirms the purchase and earns gift points. Then a second order, paid with an e-wallet and cancelled within 48 hours: the payment is refunded and stock and points come back."
 
-"Swagger UI loads the hand-written contract directly. A reviewer can try every endpoint here without reading code."
+## 5. The rows in PostgreSQL (15 seconds)
 
----
-
-## Section 4 — Run a few Insomnia calls (about 45 seconds)
-
-**Show on screen:** Open Insomnia with the imported collection from `docs/insomnia-collection.json`. Run the following requests one at a time, pausing briefly on each response:
-
-1. `POST /api/v1/auth/register` — show the 201 response with the JWT token.
-2. Set the `token` environment variable. Then run `GET /api/v1/books?category=romance` — show a page of books.
-3. Run `POST /api/v1/cart/items` — add a book to the basket.
-4. Run `POST /api/v1/orders` — place the order. Show the 201 response with `orderNumber`, `subtotal`, `vatAmount`, and `totalAmount`.
-5. Run `POST /api/v1/orders/{orderId}/payments` with the wallet method — show the `PurchaseConfirmationResponse` with the purchased books.
-
-**Say (while running):**
-
-"Register returns a JWT. Browse the catalogue — no token needed. Add a book to the basket. Place the order — the server computes all totals: subtotal, 12% VAT, delivery charge, and the final amount. Pay with a wallet. The response confirms the purchase and shows the books bought."
-
----
-
-## Section 5 — Show the database rows (about 20 seconds)
-
-**Show on screen:** Open psql or a database GUI (pgAdmin, DBeaver). Run a quick query:
-
+**Show:** psql:
 ```sql
-SELECT id, order_number, status, total_amount FROM orders LIMIT 5;
-SELECT id, order_id, quantity FROM order_items LIMIT 5;
+SELECT order_number, status, total_amount, gift_points_earned FROM orders ORDER BY id DESC LIMIT 2;
+SELECT method, status, card_last4, failure_reason FROM payments ORDER BY id DESC LIMIT 3;
 ```
 
 **Say:**
+"The rows are in PostgreSQL. The declined attempt is kept as FAILED, only the last 4 card digits are stored, and the cancelled order's payment is REFUNDED."
 
-"The rows are in PostgreSQL. The order number follows the format BW-yyyyMMdd-NNNNNN. Stock was decremented, the basket was cleared, and a gift points transaction was recorded — all in one database transaction."
+## 6. What end to end testing caught (25 seconds)
 
----
-
-## Section 6 — Run the tests (about 20 seconds)
-
-**Show on screen:** A terminal. Run `mvn test`. Wait for the result line.
+**Show:** `docs/screenshots/05-journeys-part2.jpg`, then a terminal running `mvn test` until "146 tests, 0 failures".
 
 **Say:**
+"The unit tests passed early on, but when Claude Code ran every journey against the real database it found bugs the tests missed: a declined card was accepted, and cancelling twice gave stock and points back twice. Bob fixed them, the next live run caught one more, and now all 40 live calls pass and the suite has 146 tests, all green."
 
-"The test suite runs on H2 in PostgreSQL mode — no external database needed for CI. 141 tests, zero failures."
+## 7. The pull request (15 seconds)
 
----
-
-## Section 7 — Show the GitHub PR (about 15 seconds)
-
-**Show on screen:** Open https://github.com/laharl143/ebookstore-backend/pull/1 in a browser. Scroll the PR description briefly.
+**Show:** https://github.com/laharl143/ebookstore-backend/pull/1, scroll the description.
 
 **Say:**
-
-"The work is on the `feature/api-implementation` branch. PR number 1 carries the full API documentation: what changed, how to run it, and the complete endpoint list. That is the link I submitted with this video."
+"The work is on the `feature/api-implementation` branch. Pull request 1 explains what changed, how AI was used, how to run it, and lists every endpoint. That is the link I am submitting with this video."
 
 ---
 
-## Text field entry (paste this into the submission text box)
+## Text for the submission box
 
 ```
 GitHub repository: https://github.com/laharl143/ebookstore-backend
 Pull request: https://github.com/laharl143/ebookstore-backend/pull/1
 
-I built a Spring Boot 3 and PostgreSQL REST API covering all 12 customer journeys
-from the capstone brief: authentication, catalogue browsing, basket, checkout with
-server-side totals and gift points, simulated payment, order cancellation within
-48 hours, order history, Buy It Again, and personalised recommendations. The project
-is API-first: the OpenAPI 3.0.3 contract was written before the code, and a drift
-test in the build fails if the controllers do not match it. I used IBM Bob as the
-agentic IDE throughout; every prompt, AI output, and decision is recorded in
-docs/ai-usage-log.md across 26 entries. All 141 automated tests pass on H2 in
-PostgreSQL mode.
+I built a Spring Boot 3 and PostgreSQL REST API for the Book Worm bookstore that covers all 12 customer journeys in the brief: sign up and log in, browsing and search, book detail, basket, checkout with server side totals and gift points, simulated payment, cancel within 48 hours, order history, Buy It Again and recommendations. It is API first: a hand written OpenAPI 3.0.3 contract came before the controllers, and a drift test fails the build if they disagree. I used Claude Code to design the specs and verify the app end to end, and IBM Bob to build the features from those specs; every prompt and decision is in docs/ai-usage-log.md. Running the real app against PostgreSQL caught bugs the unit tests missed, which Bob fixed. The final build has 146 passing tests, all 40 live journey calls pass, and the screenshots are in docs/screenshots.
 ```
 
 ---
 
 ## Recording tips
 
-- Use a screen recorder with system audio capture (OBS, Loom, or the Windows Xbox Game Bar with Win+G).
-- Keep each section tight. Pause between sections rather than rushing.
-- You do not need to narrate the whole log. The sections above are the minimum the grader needs to see.
-- If something goes wrong on screen, just say "let me try that again" and redo it. Short pauses are fine.
+- Any screen recorder works: OBS, Loom, or Windows Game Bar (Win+G).
+- Keep each section tight and pause between sections instead of rushing.
+- If something goes wrong on screen, say "let me try that again" and redo it.
+- If you run out of time, shorten section 3 first; sections 1, 4 and 6 matter most for the AI workflow grade.
