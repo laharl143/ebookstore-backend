@@ -1,7 +1,7 @@
 # 0004. Customer authentication and JWT security
 
 **Date**: 2026-10-07
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

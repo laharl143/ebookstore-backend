@@ -1,0 +1,596 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-08T10:32:50.455Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_bookworm",
+      "_type": "workspace",
+      "name": "Book Worm API",
+      "description": "All 12 customer journeys for the Book Worm e-bookstore backend (capstone).",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_bookworm",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8080",
+        "token": "",
+        "bookId": 1,
+        "bookId2": 9,
+        "orderId": 1,
+        "publisherId": 1,
+        "authorId": 1,
+        "orderId2": 2
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "1. Auth (register + login)",
+      "metaSortKey": 1
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "POST /auth/register",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/register",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Secret123!\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Reyes\"\n}"
+      },
+      "metaSortKey": 2
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "POST /auth/login",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/auth/login",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Secret123!\"\n}"
+      },
+      "metaSortKey": 3
+    },
+    {
+      "_id": "fld_account",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "2. Account (profile + addresses + recommendations)",
+      "metaSortKey": 4
+    },
+    {
+      "_id": "req_me",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me — profile and gift points",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 5
+    },
+    {
+      "_id": "req_get_addresses",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me/addresses — list saved addresses",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me/addresses",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 6
+    },
+    {
+      "_id": "req_save_address",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "POST /me/addresses — save delivery address",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/me/addresses",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Reyes\",\n  \"email\": \"alice@example.com\",\n  \"phone\": \"+639171234567\",\n  \"streetAddress\": \"123 Mabini Street\",\n  \"barangay\": \"Poblacion\",\n  \"city\": \"Manila\",\n  \"province\": \"Metro Manila\",\n  \"zipCode\": \"1000\",\n  \"isDefault\": true\n}"
+      },
+      "metaSortKey": 7
+    },
+    {
+      "_id": "req_recommendations",
+      "_type": "request",
+      "parentId": "fld_account",
+      "name": "GET /me/recommendations — personalised books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/me/recommendations?size=12",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 8
+    },
+    {
+      "_id": "fld_catalogue",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "3. Catalogue (browse + search + detail)",
+      "metaSortKey": 9
+    },
+    {
+      "_id": "req_categories",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /categories — all categories",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/categories",
+      "metaSortKey": 10
+    },
+    {
+      "_id": "req_books",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books — search all books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?page=0&size=20",
+      "metaSortKey": 11
+    },
+    {
+      "_id": "req_books_by_category",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books?category=romance — filter by category",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?category=romance&page=0&size=20",
+      "metaSortKey": 12
+    },
+    {
+      "_id": "req_books_search",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books?q=rizal — full-text search",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books?q=rizal&page=0&size=10",
+      "metaSortKey": 13
+    },
+    {
+      "_id": "req_book_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books/{bookId} — book detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books/{{ bookId }}",
+      "metaSortKey": 14
+    },
+    {
+      "_id": "req_related",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /books/{bookId}/related — related books",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/books/{{ bookId }}/related",
+      "metaSortKey": 15
+    },
+    {
+      "_id": "req_authors",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /authors — list authors",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/authors?page=0&size=20",
+      "metaSortKey": 16
+    },
+    {
+      "_id": "req_author_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /authors/{authorId} — author detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/authors/{{ authorId }}",
+      "metaSortKey": 17
+    },
+    {
+      "_id": "req_publishers",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /publishers — list publishers",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/publishers?page=0&size=20",
+      "metaSortKey": 18
+    },
+    {
+      "_id": "req_publisher_detail",
+      "_type": "request",
+      "parentId": "fld_catalogue",
+      "name": "GET /publishers/{publisherId} — publisher detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/publishers/{{ publisherId }}",
+      "metaSortKey": 19
+    },
+    {
+      "_id": "fld_cart",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "4. Cart (basket management)",
+      "metaSortKey": 20
+    },
+    {
+      "_id": "req_get_cart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "GET /cart — view basket",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/cart",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 21
+    },
+    {
+      "_id": "req_add_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "POST /cart/items — add book",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId }},\n  \"quantity\": 1\n}"
+      },
+      "metaSortKey": 22
+    },
+    {
+      "_id": "req_add_cart_item2",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "POST /cart/items — add second book",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId2 }},\n  \"quantity\": 1\n}"
+      },
+      "metaSortKey": 23
+    },
+    {
+      "_id": "req_update_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "PUT /cart/items/{bookId} — change quantity",
+      "method": "PUT",
+      "url": "{{ base_url }}/api/v1/cart/items/{{ bookId }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"quantity\": 2\n}"
+      },
+      "metaSortKey": 24
+    },
+    {
+      "_id": "req_remove_cart_item",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "DELETE /cart/items/{bookId} — remove one book",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/cart/items/{{ bookId2 }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 25
+    },
+    {
+      "_id": "req_clear_cart",
+      "_type": "request",
+      "parentId": "fld_cart",
+      "name": "DELETE /cart — empty basket",
+      "method": "DELETE",
+      "url": "{{ base_url }}/api/v1/cart",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 26
+    },
+    {
+      "_id": "fld_orders",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "5. Checkout and payment (place, pay, history, buy again)",
+      "metaSortKey": 27
+    },
+    {
+      "_id": "req_add_for_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "(Setup) POST /cart/items — add book before order",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/cart/items",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"bookId\": {{ bookId }},\n  \"quantity\": 1\n}"
+      },
+      "metaSortKey": 28
+    },
+    {
+      "_id": "fld_payments",
+      "_type": "request_group",
+      "parentId": "wrk_bookworm",
+      "name": "6. Cancel within 48 hours (a second order)",
+      "metaSortKey": 29
+    },
+    {
+      "_id": "req_create_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders: place order (copy its id into orderId)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"shippingAddress\": {\n    \"firstName\": \"Alice\",\n    \"lastName\": \"Reyes\",\n    \"email\": \"alice@example.com\",\n    \"phone\": \"+639171234567\",\n    \"streetAddress\": \"456 Bonifacio Ave\",\n    \"barangay\": \"Poblacion\",\n    \"city\": \"Quezon City\",\n    \"province\": \"Metro Manila\",\n    \"zipCode\": \"1100\"\n  },\n  \"saveAddress\": true,\n  \"pointsToRedeem\": 0\n}"
+      },
+      "metaSortKey": 30
+    },
+    {
+      "_id": "req_pay_declined",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders/{orderId}/payments: declined card (expect 402)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"CREDIT_CARD\",\n  \"cardNumber\": \"4000000000000002\",\n  \"cardHolderName\": \"ALICE REYES\",\n  \"cvv\": \"123\",\n  \"expiry\": \"12/2030\"\n}"
+      },
+      "metaSortKey": 31
+    },
+    {
+      "_id": "req_pay_credit_card",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders/{orderId}/payments: credit card (purchase confirmation)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/payments",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"CREDIT_CARD\",\n  \"cardNumber\": \"4242424242424242\",\n  \"cardHolderName\": \"ALICE REYES\",\n  \"cvv\": \"123\",\n  \"expiry\": \"12/2030\"\n}"
+      },
+      "metaSortKey": 32
+    },
+    {
+      "_id": "req_get_order",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "GET /orders/{orderId}: order detail",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 33
+    },
+    {
+      "_id": "req_get_orders",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "GET /orders: order history",
+      "method": "GET",
+      "url": "{{ base_url }}/api/v1/orders?page=0&size=20",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 34
+    },
+    {
+      "_id": "req_buy_again",
+      "_type": "request",
+      "parentId": "fld_orders",
+      "name": "POST /orders/{orderId}/buy-again: Buy It Again",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId }}/buy-again",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 35
+    },
+    {
+      "_id": "req_create_order2",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders: second order from the refilled basket (copy its id into orderId2)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"shippingAddress\": {\n    \"firstName\": \"Alice\",\n    \"lastName\": \"Reyes\",\n    \"email\": \"alice@example.com\",\n    \"phone\": \"+639171234567\",\n    \"streetAddress\": \"456 Bonifacio Ave\",\n    \"barangay\": \"Poblacion\",\n    \"city\": \"Quezon City\",\n    \"province\": \"Metro Manila\",\n    \"zipCode\": \"1100\"\n  },\n  \"pointsToRedeem\": 0\n}"
+      },
+      "metaSortKey": 36
+    },
+    {
+      "_id": "req_pay_wallet",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId2}/payments: e-wallet",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId2 }}/payments",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"method\": \"E_WALLET\",\n  \"walletMobileNumber\": \"+639171234567\"\n}"
+      },
+      "metaSortKey": 37
+    },
+    {
+      "_id": "req_cancel_order",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId2}/cancel: cancel within 48h",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId2 }}/cancel",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 38
+    },
+    {
+      "_id": "req_cancel_again",
+      "_type": "request",
+      "parentId": "fld_payments",
+      "name": "POST /orders/{orderId2}/cancel: cancel again (expect 409)",
+      "method": "POST",
+      "url": "{{ base_url }}/api/v1/orders/{{ orderId2 }}/cancel",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ token }}"
+        }
+      ],
+      "metaSortKey": 39
+    }
+  ]
+}

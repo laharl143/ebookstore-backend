@@ -19,17 +19,17 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Coding standards & tooling | Foundation | done |
 | 3 | Data model | Foundation | done |
 | 4 | API contract (OpenAPI) | Foundation | done |
-| 5 | Authentication | Foundation | in-progress |
-| 6 | Browse the catalogue | Journey 1: Catalogue | planned |
-| 7 | Book detail | Journey 1: Catalogue | planned |
-| 8 | Basket | Journey 2: Payment & purchase | planned |
-| 9 | Checkout and order | Journey 2: Payment & purchase | planned |
-| 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | planned |
-| 11 | Cancel within 48 hours | Journey 2: Payment & purchase | planned |
-| 12 | Order history and Buy It Again | Journey 3: E-store Home | planned |
-| 13 | Recommendations | Journey 3: E-store Home | planned |
-| 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
-| 15 | Git branch and pull request | Submission | planned |
+| 5 | Authentication | Foundation | done |
+| 6 | Browse the catalogue | Journey 1: Catalogue | done |
+| 7 | Book detail | Journey 1: Catalogue | done |
+| 8 | Basket | Journey 2: Payment & purchase | done |
+| 9 | Checkout and order | Journey 2: Payment & purchase | done |
+| 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | done |
+| 11 | Cancel within 48 hours | Journey 2: Payment & purchase | done |
+| 12 | Order history and Buy It Again | Journey 3: E-store Home | done |
+| 13 | Recommendations | Journey 3: E-store Home | done |
+| 14 | Run kit (Postgres setup, README, Insomnia) | Submission | done |
+| 15 | Git branch and pull request | Submission | done |
 | 16 | Walkthrough video, report and submission | Submission | planned |
 
 ## Foundations
@@ -72,83 +72,118 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/resources/
    - [x] Drift test and Swagger UI through springdoc (AC-3, AC-5)
 - [x] Verify it: `/check verify API contract` (skipped: you marked it done after `mvn clean install` passed with 54 tests and Swagger UI was verified)
 
-### 5. Authentication · in-progress · Beta
+### 5. Authentication · done · Beta
 Journey step 1: register and login. Passwords are hashed with BCrypt, login returns a JWT, and every customer endpoint requires it.
 **Done when:** a user can register and log in and gets a token; protected calls without a valid token return 401; wrong credentials and a duplicate email return clear errors.
-spec [0004](../specs/0004-authentication/index.md)
+spec [0004](../specs/0004-authentication/index.md) · code in `src/main/java/com/bookworm/ebookstore/{config,controller,dto,mapper,service}/`
 - [x] Design it (spec): `/architect authentication`
-- [ ] Build it: `/develop authentication`
-   - [ ] Security dependencies, JWT encoder/decoder, and properties (AC-5, AC-7)
-   - [ ] Auth DTOs with validation and password masking (AC-1, AC-3, AC-8)
-   - [ ] UserRepository queries, AuthService, and AuthController (AC-1, AC-2, AC-3, AC-4)
-   - [ ] Spring Security filter chain, public matchers, and ProblemEntryPoint (AC-5, AC-6)
-- [ ] Verify it: `/check verify authentication`
-- [ ] Test it: `/test authentication`
+- [x] Build it: `/develop authentication`
+   - [x] Security dependencies, JWT encoder/decoder, and properties (AC-5, AC-7)
+   - [x] Auth DTOs with validation and password masking (AC-1, AC-3, AC-8)
+   - [x] UserRepository queries, AuthService, and AuthController (AC-1, AC-2, AC-3, AC-4)
+   - [x] Spring Security filter chain, public matchers, and ProblemEntryPoint (AC-5, AC-6)
+- [x] Verify it: `/check verify authentication`
+- [x] Test it: `/test authentication`
 
 ## Journey 1: Catalogue (slide steps 3, 5, 6, 7)
 
-### 6. Browse the catalogue
+### 6. Browse the catalogue · done
 Public browsing: list categories, list books in a category, search by text with simple filters (language, format, price range, sort), and browse by brand (authors and publishers).
 **Done when:** each browse call returns paged books with the data a book card needs, including the estimated delivery date; an unknown category returns 404; an empty result returns an empty page, not an error.
-- [ ] Build it: `/develop browse the catalogue`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto}/`
+- [x] Build it: `/develop browse the catalogue`
 
-### 7. Book detail
+### 7. Book detail · done
 One book with everything the product page shows (covers, author with bio, publisher, format, genre tags, price, stock, copies sold, delivery date) plus related books (same genre or author, excluding itself).
 **Done when:** detail and related calls return the right book and a related list; an unknown id returns 404.
-- [ ] Build it: `/develop book detail`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto}/`
+- [x] Build it: `/develop book detail`
 
 ## Journey 2: Payment & purchase (slide steps 8 to 12)
 
-### 8. Basket
+### 8. Basket · done
 Journey step 8: the logged in user's server side basket. Add a book, change its quantity, remove it, and view it with a running subtotal.
 **Done when:** basket changes persist per user; adding more than the stock or a quantity below 1 is rejected with a clear error.
-- [ ] Build it: `/develop basket`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
+- [x] Build it: `/develop basket`
 
-### 9. Checkout and order · needs a decision · Beta
+### 9. Checkout and order · done · Beta
 Journey steps 9 and 10: choose a saved or new delivery address, optionally redeem gift points, and place the order. The server computes the subtotal, tax, delivery charge, points discount and total, checks and decrements stock, and empties the basket.
 **Done when:** an order is created with correct server side totals and an address snapshot; redeeming more points than the balance or the total is rejected; insufficient stock is rejected and nothing is changed.
-- [ ] Design it (spec): `/architect checkout and order`
+spec [0005](../specs/0005-checkout-and-order/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
+- [x] Design it (spec): `/architect checkout and order`
+- [x] Build it: `/develop checkout and order`
+   - [x] DTOs, mappers and class-level address constraint (AC-1, AC-2, AC-5)
+   - [x] AccountController and AccountService: /me, addresses list and save (AC-7, AC-8, AC-9)
+   - [x] OrderController stubs and createOrder + getOrderById (AC-1, AC-3, AC-4, AC-5, AC-6, AC-10)
+   - [x] OrderService: lock, validate, compute totals, stock decrement, points ledger, basket clear (AC-1 to AC-6, AC-10)
+   - [x] Build passes mvn clean install with no drift failures (AC-1 to AC-10)
+- [x] Verify it: /verify checkout and order (skipped: you marked it done after tests passed)
+- [x] Test it: /test checkout and order
 
-### 10. Simulated payment and confirmation · Beta
+### 10. Simulated payment and confirmation · Beta · done
 Journey steps 10 to 12: pay with credit card, debit card, UPI or wallet. The request is validated and then discarded except for the method, the last 4 digits, the status and a generated transaction id. The order is confirmed and gift points are earned.
 **Done when:** a valid payment confirms the order and returns a confirmation with the purchased books; an invalid card format is rejected; no full card number or CVV ever reaches the database or the logs.
-- [ ] Build it: `/develop simulated payment and confirmation`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository,dto}/`
+- [x] Build it: `/develop simulated payment and confirmation`
+   - [x] PaymentRequest and PurchaseConfirmationResponse DTOs
+   - [x] processPayment in OrderService: guard, card validation, Luhn check, store last 4 only, confirm order, earn gift points
+   - [x] POST /api/v1/orders/{orderId}/payments in OrderController
+   - [x] getOrderById and getOrders updated to include payment data
+   - [x] Service integration tests and controller tests (133 tests, BUILD SUCCESS)
 
-### 11. Cancel within 48 hours · Beta
+### 11. Cancel within 48 hours · Beta · done
 Journey step 12: the customer cancels a confirmed order within 48 hours, before it ships. The payment is marked refunded and stock and gift points are restored.
 **Done when:** a cancel inside the window succeeds and restores stock and points; a cancel after 48 hours, on a shipped order, or on someone else's order is rejected.
-- [ ] Build it: `/develop cancel within 48 hours`
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository,mapper}/`
+- [x] Build it: `/develop cancel within 48 hours`
+   - [x] cancelOrder in OrderService with status guards, physical book stock increment, and gift points restoration/reversal
+   - [x] POST /api/v1/orders/{orderId}/cancel in OrderController
+   - [x] Integration and controller tests for unpaid and confirmed order cancellation (141 tests, BUILD SUCCESS)
 
 ## Journey 3: E-store Home (slide steps 1 and 2)
 
-### 12. Order history and Buy It Again
+### 12. Order history and Buy It Again · done
 Journey step 2: the user's past orders, newest first, with their items. Buy It Again copies a past order's items back into the basket (skipping anything out of stock).
 **Done when:** history shows only the caller's orders; Buy It Again fills the basket and reports any skipped books.
-- [ ] Build it: `/develop order history and buy it again`
+- [x] Build it: `/develop order history and buy it again`
+   - [x] BuyAgainResponse, AddedItem, SkippedItem DTOs
+   - [x] buyAgain in OrderService: load order, copy items, skip out-of-stock and limit-reached, return response
+   - [x] POST /api/v1/orders/{orderId}/buy-again in OrderController
+   - [x] Build passes mvn clean install (141 tests, BUILD SUCCESS)
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,dto}/`
 
-### 13. Recommendations
+### 13. Recommendations · done
 Journey step 2: books in the genres and by the authors the user has bought, excluding books they already own; a new user gets the newest books instead.
 **Done when:** a buyer gets books related to their history; a user with no orders still gets a non empty list.
-- [ ] Build it: `/develop recommendations`
+- [x] Build it: `/develop recommendations`
+   - [x] findBoughtBooks and findNewestExcludingTitles queries in BookRepository
+   - [x] getRecommendations in AccountService: score by author match and shared genres, top up with newest
+   - [x] GET /api/v1/me/recommendations in AccountController with size parameter
+   - [x] Build passes mvn test (141 tests, BUILD SUCCESS)
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository}/`
 
 ## Submission
 
-### 14. Run kit (Postgres setup, README, Insomnia)
+### 14. Run kit (Postgres setup, README, Insomnia) · done
 Everything a reviewer needs to run and check it: PostgreSQL setup steps for Windows, `application.properties` reading credentials from environment variables, a README with run steps and the endpoint list, and an Insomnia collection that walks all 12 journeys.
 **Done when:** following the README on a fresh Windows machine starts the app; the Insomnia collection runs every journey successfully and the new rows are visible in PostgreSQL; `mvn test` passes.
-- [ ] Build it: `/develop run kit`
+code in `README.md`, `docs/insomnia-collection.json`
+- [x] Build it: `/develop run kit`
+   - [x] README.md: PostgreSQL Windows setup, env vars, run steps, endpoint list
+   - [x] Insomnia collection: all 12 journeys
 
-### 15. Git branch and pull request
-A personal GitHub repo with the work on `feature/api-implementation` and a pull request whose description carries the API documentation. Your manager is added as a collaborator.
+### 15. Git branch and pull request · done
+A personal GitHub repo with the work on `feature/api-implementation` and a pull request whose description carries the API documentation.
 **Done when:** the PR is open against `main` with the endpoint list, run steps and a link to the OpenAPI file.
-- [ ] Write the PR: `/document pr`
+- [x] Write the PR: `/document pr` (PR #1 open at https://github.com/laharl143/ebookstore-backend/pull/1)
 
 ### 16. Walkthrough video, report and submission
 The required deliverable is a short video (about 3 minutes) explaining the steps taken with the agentic IDE, submitted with the GitHub repo link (slide 12 and the AI review page). An optional `Capstone-Report.pdf` (5 to 8 pages) can be attached as backup: the AI workflow with screenshots, the API design, proof that it runs and test results. `docs/ai-usage-log.md` is kept current at every step and is the script source.
 **Done when:** the video is recorded and shows the AI workflow, the OpenAPI spec, the app starting, Insomnia calls, database rows and `mvn test`; the repo and PR links plus a 4 to 6 sentence summary are ready for the text field; screenshots in `docs/screenshots/` back it up.
-- [ ] Write the video script from the AI usage log
+- [x] Write the video script from the AI usage log
 - [ ] Record the video (about 3 minutes)
-- [ ] Optional: assemble `Capstone-Report.pdf`
+- [x] Optional: assemble `Capstone-Report.pdf` (docs/Capstone-Report.pdf, 9 pages)
 
 ## Deferred
 Outside the 12 journeys, kept so the plan stays honest. Any of them can come back as a later release.

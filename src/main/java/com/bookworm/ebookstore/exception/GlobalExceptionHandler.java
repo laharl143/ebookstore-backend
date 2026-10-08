@@ -47,6 +47,53 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetail> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ProblemDetail> handleDuplicateResourceException(DuplicateResourceException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ProblemDetail> handleValidationException(ValidationException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        problem.setProperty("errors", ex.getErrors());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ProblemDetail> handleBadRequestException(BadRequestException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ProblemDetail> handleConflictException(ConflictException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        if (ex.getBookIds() != null && !ex.getBookIds().isEmpty()) {
+            problem.setProperty("bookIds", ex.getBookIds());
+        }
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
+    @ExceptionHandler(PaymentDeclinedException.class)
+    public ResponseEntity<ProblemDetail> handlePaymentDeclined(PaymentDeclinedException ex, HttpServletRequest request) {
+        ApiErrorCode errorCode = ex.getErrorCode();
+        ProblemDetail problem = buildProblemDetail(errorCode.getHttpStatus(), errorCode.getDefaultTitle(), ex.getMessage(), errorCode, request.getRequestURI());
+        problem.setProperty("transactionId", ex.getTransactionId());
+        return ResponseEntity.status(errorCode.getHttpStatus()).contentType(PROBLEM_JSON).body(problem);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
