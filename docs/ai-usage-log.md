@@ -523,3 +523,27 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+
+## 25. Recommendations feature build (`/develop recommendations`)
+
+**Date:** 2026-10-08
+
+**Tool:** IBM Bob
+
+**Prompt (summary):** `/develop recommendations` - build Feature 13 from the scope. No separate spec; spec 0003 (API contract) is the source of truth for operation #6 `GET /api/v1/me/recommendations`.
+
+**AI output:**
+- Added two JPQL queries to `BookRepository`: `findBoughtBooks` (returns all distinct books in the user's CONFIRMED, SHIPPED, or DELIVERED orders) and `findNewestExcludingTitles` (returns books whose lower-cased titles are not in a given exclusion set, sorted by `publishDate` desc then `id` asc).
+- Added `getRecommendations(Long userId, int size)` to `AccountService`: loads bought books, builds author-id and genre-id sets, filters and scores all candidates (score = 2 if candidate author is in bought authors + count of shared genre ids), sorts by score desc then `copiesSold` desc then `id` asc, tops up with newest unbought books to reach `size`, maps to `BookSummaryResponse` using existing `BookMapper`.
+- Added `GET /api/v1/me/recommendations` endpoint to `AccountController` with `@RequestParam(defaultValue = "12") @Min(1) @Max(50) int size` and `@Validated` on the controller for parameter constraint enforcement.
+- Updated `docs/scope/scope.md`: feature 13 set to `in-progress`, `Build it` box ticked, milestones added, spec and code pointers added.
+- `mvn test` result: 141 tests, 0 failures, BUILD SUCCESS.
+
+**Decisions / choices to review:**
+- Used in-memory scoring via `bookRepository.findAll()` for the candidate set. The catalogue has ~27 books and this is a capstone; a native SQL scoring query would be faster for a real app but adds SQL complexity for no functional difference here.
+- New user with no bought orders: the candidate block is skipped entirely and the top-up block fills all `size` slots with the newest books.
+- Bought titles are excluded by lower-cased title match across all formats, consistent with the spec wording "any title the user bought (any format)".
+
+**Review / changes by me:** _pending_
+
+---

@@ -27,7 +27,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | done |
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | done |
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | done |
-| 13 | Recommendations | Journey 3: E-store Home | planned |
+| 13 | Recommendations | Journey 3: E-store Home | in-progress |
 | 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
 | 15 | Git branch and pull request | Submission | planned |
 | 16 | Walkthrough video, report and submission | Submission | planned |
@@ -153,10 +153,15 @@ Journey step 2: the user's past orders, newest first, with their items. Buy It A
    - [x] Build passes mvn clean install (141 tests, BUILD SUCCESS)
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,dto}/`
 
-### 13. Recommendations
+### 13. Recommendations · in-progress
 Journey step 2: books in the genres and by the authors the user has bought, excluding books they already own; a new user gets the newest books instead.
 **Done when:** a buyer gets books related to their history; a user with no orders still gets a non empty list.
-- [ ] Build it: `/develop recommendations`
+- [x] Build it: `/develop recommendations`
+   - [x] findBoughtBooks and findNewestExcludingTitles queries in BookRepository
+   - [x] getRecommendations in AccountService: score by author match and shared genres, top up with newest
+   - [x] GET /api/v1/me/recommendations in AccountController with size parameter
+   - [x] Build passes mvn test (141 tests, BUILD SUCCESS)
+spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,repository}/`
 
 ## Submission
 
