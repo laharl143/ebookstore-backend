@@ -181,7 +181,7 @@ A personal GitHub repo with the work on `feature/api-implementation` and a pull 
 ### 16. Walkthrough video, report and submission
 The required deliverable is a short video (about 3 minutes) explaining the steps taken with the agentic IDE, submitted with the GitHub repo link (slide 12 and the AI review page). An optional `Capstone-Report.pdf` (5 to 8 pages) can be attached as backup: the AI workflow with screenshots, the API design, proof that it runs and test results. `docs/ai-usage-log.md` is kept current at every step and is the script source.
 **Done when:** the video is recorded and shows the AI workflow, the OpenAPI spec, the app starting, Insomnia calls, database rows and `mvn test`; the repo and PR links plus a 4 to 6 sentence summary are ready for the text field; screenshots in `docs/screenshots/` back it up.
-- [ ] Write the video script from the AI usage log
+- [x] Write the video script from the AI usage log
 - [ ] Record the video (about 3 minutes)
 - [ ] Optional: assemble `Capstone-Report.pdf`
 

@@ -568,3 +568,21 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - README uses Option A (env vars) as the recommended credential approach and Option B (local properties file) as secondary — matches `application.properties` design and `AGENTS.md`.
 - Insomnia collection uses template variables (`{{ token }}`, `{{ bookId }}`) rather than hardcoded values so the reviewer can plug in real IDs after running register/login.
 - Sample card numbers in the Insomnia payment requests are standard Luhn-valid test numbers (Visa 4532015112830366, Mastercard 5425233430109903); no real card data.
+
+---
+
+## 27. Feature 15 scope sync and video script (`/document pr` + scope update)
+
+**Date:** 2026-10-08
+
+**Tool:** IBM Bob
+
+**Prompt (summary):** Mark Feature 15 (Git branch and pull request) done, then write the walkthrough video script to `docs/video-script.md` for the Feature 16 submission.
+
+**AI output:**
+- Updated `docs/scope/scope.md`: Feature 15 set to `done`, PR #1 link recorded, `Write the PR` box ticked.
+- `docs/video-script.md`: 7-section script with on-screen instructions and narration for each section (IBM Bob workflow, OpenAPI contract, app startup and Swagger UI, Insomnia calls across all journeys, database rows, test run, GitHub PR). Includes a ready-to-paste text field entry for the submission page.
+- Feature 16 `Write the video script` box ticked.
+
+**Decisions / choices to review:**
+- Video script covers the minimum evidence the AI review rubric needs: agentic tool usage, API design, working app, and test results. Optional PDF report section left in scope but not scripted.
