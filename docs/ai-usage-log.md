@@ -410,3 +410,20 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 **Review / changes by me:** _pending_
 
 ---
+
+## 20. Checkout and order status sync
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Mark Feature 9 (Checkout and order) as done in `docs/scope/scope.md` and accept spec 0005.
+
+**AI output:**
+- Updated `docs/scope/scope.md` summary table and feature section, marking Feature 9 as `done`.
+- Updated spec [`docs/specs/0005-checkout-and-order/index.md`](docs/specs/0005-checkout-and-order/index.md:1) setting `**Status**:` to `Accepted`.
+
+**Decisions / choices to review:**
+- Reconciled scope states. Ready to develop Feature 10 (`/develop simulated payment and confirmation`).
+
+**Review / changes by me:** _pending_
+
+---

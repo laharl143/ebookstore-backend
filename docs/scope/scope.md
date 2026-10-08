@@ -23,7 +23,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 6 | Browse the catalogue | Journey 1: Catalogue | done |
 | 7 | Book detail | Journey 1: Catalogue | done |
 | 8 | Basket | Journey 2: Payment & purchase | done |
-| 9 | Checkout and order | Journey 2: Payment & purchase | in-progress |
+| 9 | Checkout and order | Journey 2: Payment & purchase | done |
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | planned |
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | planned |
 | 12 | Order history and Buy It Again | Journey 3: E-store Home | planned |
@@ -107,7 +107,7 @@ Journey step 8: the logged in user's server side basket. Add a book, change its 
 spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
 - [x] Build it: `/develop basket`
 
-### 9. Checkout and order · in-progress · Beta
+### 9. Checkout and order · done · Beta
 Journey steps 9 and 10: choose a saved or new delivery address, optionally redeem gift points, and place the order. The server computes the subtotal, tax, delivery charge, points discount and total, checks and decrements stock, and empties the basket.
 **Done when:** an order is created with correct server side totals and an address snapshot; redeeming more points than the balance or the total is rejected; insufficient stock is rejected and nothing is changed.
 spec [0005](../specs/0005-checkout-and-order/index.md) · code in `src/main/java/com/bookworm/ebookstore/{controller,service,mapper,dto,repository}/`
@@ -118,8 +118,8 @@ spec [0005](../specs/0005-checkout-and-order/index.md) · code in `src/main/java
    - [x] OrderController stubs and createOrder + getOrderById (AC-1, AC-3, AC-4, AC-5, AC-6, AC-10)
    - [x] OrderService: lock, validate, compute totals, stock decrement, points ledger, basket clear (AC-1 to AC-6, AC-10)
    - [x] Build passes mvn clean install with no drift failures (AC-1 to AC-10)
-- [ ] Verify it: /verify checkout and order
-- [ ] Test it: /test checkout and order
+- [x] Verify it: /verify checkout and order (skipped: you marked it done after tests passed)
+- [x] Test it: /test checkout and order
 
 ### 10. Simulated payment and confirmation · Beta
 Journey steps 10 to 12: pay with credit card, debit card, UPI or wallet. The request is validated and then discarded except for the method, the last 4 digits, the status and a generated transaction id. The order is confirmed and gift points are earned.
