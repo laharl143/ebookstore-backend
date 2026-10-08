@@ -395,20 +395,134 @@ class PaymentServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Cancel CONFIRMED order after 48 hours throws ConflictException ORDER_NOT_CANCELLABLE")
+    @DisplayName("Cancel CONFIRMED order after 48 hours throws ConflictException CANCEL_WINDOW_EXPIRED")
     void cancelOrder_confirmedAfter48Hours_conflict() {
         Long orderId = createPendingOrder();
         PaymentRequest paymentRequest = new PaymentRequest(PaymentMethod.E_WALLET, null, null, null, null, "+639171234567");
         orderService.processPayment(testUser.getId(), orderId, paymentRequest);
 
-        // Manipulate paidAt / placedAt in DB to be 49 hours ago
+        // Manipulate placedAt in DB to be 49 hours ago (spec 0003: window counts from placed_at)
         com.bookworm.ebookstore.entity.Order order = orderRepository.findById(orderId).orElseThrow();
-        order.setPaidAt(OffsetDateTime.now().minusHours(49));
         order.setPlacedAt(OffsetDateTime.now().minusHours(49));
         orderRepository.save(order);
 
         ConflictException ex = assertThrows(ConflictException.class,
                 () -> orderService.cancelOrder(testUser.getId(), orderId));
-        assertThat(ex.getErrorCode()).isEqualTo(ApiErrorCode.ORDER_NOT_CANCELLABLE);
+        assertThat(ex.getErrorCode()).isEqualTo(ApiErrorCode.CANCEL_WINDOW_EXPIRED);
     }
+
+    @Test
+    @DisplayName("Cancel CONFIRMED order: status CANCELLED, cancelledAt set, refundedAt set, stock restored once, exactly one RESTORED and one REVERSED ledger row")
+    void cancelOrder_confirmed_fullStateCheck() {
+        Book physicalBook = bookRepository.findAll().stream()
+                .filter(b -> b.getFormat() == BookFormat.PAPERBACK && b.getStockQuantity() > 2)
+                .findFirst()
+                .orElseThrow();
+        int initialStock = physicalBook.getStockQuantity();
+
+        CartItem item = new CartItem();
+        item.setUser(testUser);
+        item.setBook(physicalBook);
+        item.setQuantity(1);
+        item.setCreatedAt(OffsetDateTime.now());
+        item.setUpdatedAt(OffsetDateTime.now());
+        cartItemRepository.save(item);
+
+        CreateOrderRequest createRequest = new CreateOrderRequest(savedAddress.getId(), null, false, 0);
+        var createdOrder = orderService.createOrder(testUser.getId(), createRequest);
+        Long orderId = createdOrder.id();
+
+        // Pay to confirm
+        PaymentRequest paymentRequest = new PaymentRequest(PaymentMethod.E_WALLET, null, null, null, null, "+639171234567");
+        orderService.processPayment(testUser.getId(), orderId, paymentRequest);
+
+        // Cancel
+        var cancelled = orderService.cancelOrder(testUser.getId(), orderId);
+
+        // Check response
+        assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(cancelled.cancelledAt()).isNotNull();
+        assertThat(cancelled.payment()).isNotNull();
+        assertThat(cancelled.payment().status()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(cancelled.payment().refundedAt()).isNotNull();
+
+        // Check order in DB
+        com.bookworm.ebookstore.entity.Order dbOrder = orderRepository.findById(orderId).orElseThrow();
+        assertThat(dbOrder.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(dbOrder.getCancelledAt()).isNotNull();
+
+        // Check payment in DB has refundedAt
+        com.bookworm.ebookstore.entity.Payment dbPayment = paymentRepository.findByOrderId(orderId).orElseThrow();
+        assertThat(dbPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(dbPayment.getRefundedAt()).isNotNull();
+
+        // Check stock restored exactly once
+        Book dbBook = bookRepository.findById(physicalBook.getId()).orElseThrow();
+        assertThat(dbBook.getStockQuantity()).isEqualTo(initialStock);
+
+        // Check ledger: exactly one RESTORED (redeemed points) — here 0 redeemed so no RESTORED,
+        // and at most one REVERSED for earned points
+        List<com.bookworm.ebookstore.entity.GiftPointTransaction> txs = giftPointTransactionRepository.findAll().stream()
+                .filter(t -> t.getOrder().getId().equals(orderId))
+                .toList();
+        long restoredCount = txs.stream().filter(t -> t.getType() == GiftPointType.RESTORED).count();
+        long reversedCount = txs.stream().filter(t -> t.getType() == GiftPointType.REVERSED).count();
+        assertThat(restoredCount).isZero(); // no points redeemed on this order
+        int earnedPoints = dbOrder.getGiftPointsEarned();
+        if (earnedPoints > 0) {
+            assertThat(reversedCount).isEqualTo(1);
+        } else {
+            assertThat(reversedCount).isZero();
+        }
+    }
+
+    @Test
+    @DisplayName("Cancel CONFIRMED order twice: second call returns 409 ORDER_NOT_CANCELLABLE and changes nothing")
+    void cancelOrder_confirmedTwice_secondReturns409() {
+        Book physicalBook = bookRepository.findAll().stream()
+                .filter(b -> b.getFormat() == BookFormat.PAPERBACK && b.getStockQuantity() > 2)
+                .findFirst()
+                .orElseThrow();
+        int initialStock = physicalBook.getStockQuantity();
+
+        CartItem item = new CartItem();
+        item.setUser(testUser);
+        item.setBook(physicalBook);
+        item.setQuantity(1);
+        item.setCreatedAt(OffsetDateTime.now());
+        item.setUpdatedAt(OffsetDateTime.now());
+        cartItemRepository.save(item);
+
+        CreateOrderRequest createRequest = new CreateOrderRequest(savedAddress.getId(), null, false, 0);
+        var createdOrder = orderService.createOrder(testUser.getId(), createRequest);
+        Long orderId = createdOrder.id();
+
+        // Pay to confirm
+        PaymentRequest paymentRequest = new PaymentRequest(PaymentMethod.E_WALLET, null, null, null, null, "+639171234567");
+        orderService.processPayment(testUser.getId(), orderId, paymentRequest);
+
+        // First cancel succeeds
+        orderService.cancelOrder(testUser.getId(), orderId);
+
+        // Record DB state after first cancel
+        int stockAfterFirstCancel = bookRepository.findById(physicalBook.getId()).orElseThrow().getStockQuantity();
+        long ledgerRowsAfterFirstCancel = giftPointTransactionRepository.findAll().stream()
+                .filter(t -> t.getOrder().getId().equals(orderId)).count();
+
+        // Second cancel must fail with ORDER_NOT_CANCELLABLE
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> orderService.cancelOrder(testUser.getId(), orderId));
+        assertThat(ex.getErrorCode()).isEqualTo(ApiErrorCode.ORDER_NOT_CANCELLABLE);
+
+        // Nothing must have changed
+        assertThat(bookRepository.findById(physicalBook.getId()).orElseThrow().getStockQuantity())
+                .isEqualTo(stockAfterFirstCancel);
+        assertThat(giftPointTransactionRepository.findAll().stream()
+                .filter(t -> t.getOrder().getId().equals(orderId)).count())
+                .isEqualTo(ledgerRowsAfterFirstCancel);
+
+        // Stock was restored exactly once (equals initial)
+        assertThat(stockAfterFirstCancel).isEqualTo(initialStock);
+    }
+
 }

@@ -353,4 +353,29 @@ class OrderAndAccountControllerTest {
         mockMvc.perform(post("/api/v1/orders/100/cancel"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("POST /api/v1/orders/{id}/payments with card ending 0002 returns 402 PAYMENT_DECLINED with transactionId")
+    void processPayment_declinedCard_returns402() throws Exception {
+        when(orderService.processPayment(eq(1L), eq(100L), any()))
+                .thenThrow(new com.bookworm.ebookstore.exception.PaymentDeclinedException("txn-failed-001"));
+
+        String json = """
+                {
+                    "method": "CREDIT_CARD",
+                    "cardNumber": "4000000000000002",
+                    "cardHolderName": "Maria Santos",
+                    "cvv": "123",
+                    "expiry": "12/2028"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/orders/100/payments")
+                        .with(userJwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isPaymentRequired())
+                .andExpect(jsonPath("$.code").value("PAYMENT_DECLINED"))
+                .andExpect(jsonPath("$.transactionId").value("txn-failed-001"));
+    }
 }

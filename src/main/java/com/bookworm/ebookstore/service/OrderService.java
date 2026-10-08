@@ -45,6 +45,7 @@ import com.bookworm.ebookstore.exception.ApiErrorCode;
 import com.bookworm.ebookstore.exception.AuthenticationException;
 import com.bookworm.ebookstore.exception.BadRequestException;
 import com.bookworm.ebookstore.exception.ConflictException;
+import com.bookworm.ebookstore.exception.PaymentDeclinedException;
 import com.bookworm.ebookstore.exception.ResourceNotFoundException;
 import com.bookworm.ebookstore.mapper.AddressMapper;
 import com.bookworm.ebookstore.mapper.OrderMapper;
@@ -69,6 +70,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final GiftPointTransactionRepository giftPointTransactionRepository;
     private final PaymentRepository paymentRepository;
+    private final FailedPaymentWriter failedPaymentWriter;
     private final StoreProperties storeProperties;
     private final Clock clock;
 
@@ -82,6 +84,7 @@ public class OrderService {
             OrderItemRepository orderItemRepository,
             GiftPointTransactionRepository giftPointTransactionRepository,
             PaymentRepository paymentRepository,
+            FailedPaymentWriter failedPaymentWriter,
             StoreProperties storeProperties,
             Clock clock
     ) {
@@ -94,6 +97,7 @@ public class OrderService {
         this.orderItemRepository = orderItemRepository;
         this.giftPointTransactionRepository = giftPointTransactionRepository;
         this.paymentRepository = paymentRepository;
+        this.failedPaymentWriter = failedPaymentWriter;
         this.storeProperties = storeProperties;
         this.clock = clock;
     }
@@ -306,7 +310,13 @@ public class OrderService {
 
         OffsetDateTime now = OffsetDateTime.now(clock);
 
-        // 5. Persist the payment record (simulated: always SUCCESS)
+        // 5. Simulate decline for cards ending in 0002 (spec 0002 / spec 0003)
+        if ("0002".equals(cardLast4)) {
+            String transactionId = failedPaymentWriter.write(order, method, cardLast4, now);
+            throw new PaymentDeclinedException(transactionId);
+        }
+
+        // 6. Persist the SUCCESS payment record
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setMethod(method);
@@ -317,18 +327,18 @@ public class OrderService {
         payment.setCreatedAt(now);
         Payment savedPayment = paymentRepository.save(payment);
 
-        // 6. Compute gift points earned: floor(totalAmount / pesosPerPoint)
+        // 7. Compute gift points earned: floor(totalAmount / pesosPerPoint)
         int pesosPerPoint = storeProperties.points().pesosPerPoint();
         int pointsEarned = order.getTotalAmount().divide(BigDecimal.valueOf(pesosPerPoint), 0, RoundingMode.FLOOR).intValue();
 
-        // 7. Confirm the order: status → CONFIRMED, paidAt, giftPointsEarned
+        // 8. Confirm the order: status → CONFIRMED, paidAt, giftPointsEarned
         order.setStatus(OrderStatus.CONFIRMED);
         order.setPaidAt(now);
         order.setGiftPointsEarned(pointsEarned);
         order.setUpdatedAt(now);
         Order savedOrder = orderRepository.save(order);
 
-        // 8. Credit gift points to user and write ledger row
+        // 9. Credit gift points to user and write ledger row
         if (pointsEarned > 0) {
             com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
                     .orElseThrow(() -> new AuthenticationException("User not found"));
@@ -350,36 +360,35 @@ public class OrderService {
 
     @Transactional
     public OrderResponse cancelOrder(Long userId, Long orderId) {
-        // 1. Load and ownership-check the order
+        // 1. Ownership / existence check: load order to confirm it belongs to this user
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
 
         OffsetDateTime now = OffsetDateTime.now(clock);
 
-        // 2. Guard: check if order is cancellable
-        OrderStatus currentStatus = order.getStatus();
-        if (currentStatus == OrderStatus.PENDING_PAYMENT) {
-            // Unpaid orders can be cancelled at any time
-        } else if (currentStatus == OrderStatus.CONFIRMED) {
-            // Confirmed orders can only be cancelled within 48 hours of paidAt (or placedAt per deadline rule)
-            OffsetDateTime referenceTime = order.getPaidAt() != null ? order.getPaidAt() : order.getPlacedAt();
-            OffsetDateTime cancelDeadline = referenceTime.plusHours(storeProperties.cancelWindowHours());
-            if (now.isAfter(cancelDeadline)) {
-                throw new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE, "Cancellation window has expired");
+        // 2. Guarded UPDATE: atomically transitions to CANCELLED only when the row is still in a
+        //    cancellable state. Window is measured from placed_at (spec 0003 value sourcing).
+        OffsetDateTime cutoff = now.minusHours(storeProperties.cancelWindowHours());
+        int updated = orderRepository.cancelOrderGuarded(orderId, userId, now, cutoff);
+
+        if (updated == 0) {
+            // No row was changed; read the current status to return the right error code
+            OrderStatus currentStatus = order.getStatus();
+            if (currentStatus == OrderStatus.CONFIRMED) {
+                throw new ConflictException(ApiErrorCode.CANCEL_WINDOW_EXPIRED, "Cancellation window has expired");
             }
-        } else {
-            // SHIPPED, DELIVERED, CANCELLED cannot be cancelled
-            throw new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE, "Order cannot be cancelled in status: " + currentStatus);
+            throw new ConflictException(ApiErrorCode.ORDER_NOT_CANCELLABLE,
+                    "Order cannot be cancelled in status: " + currentStatus);
         }
 
-        // 3. Mark order as CANCELLED
-        order.setStatus(OrderStatus.CANCELLED);
-        order.setCancelledAt(now);
-        order.setUpdatedAt(now);
-        Order savedOrder = orderRepository.save(order);
+        // 3. Reload the now-CANCELLED order (guarded UPDATE cleared the cache)
+        Order savedOrder = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ApiErrorCode.ORDER_NOT_FOUND, "Order not found"));
 
-        // 4. Restore physical book stock (in ascending book_id order)
-        List<OrderItem> sortedItems = order.getItems().stream()
+        OrderStatus previousStatus = order.getStatus();
+
+        // 4. Restore physical book stock (in ascending book_id order to avoid deadlocks)
+        List<OrderItem> sortedItems = savedOrder.getItems().stream()
                 .sorted(Comparator.comparing(item -> item.getBook().getId()))
                 .toList();
 
@@ -391,7 +400,7 @@ public class OrderService {
         }
 
         // 5. Restore redeemed gift points if any (RESTORED ledger row and balance credit)
-        int pointsRedeemed = order.getGiftPointsRedeemed();
+        int pointsRedeemed = savedOrder.getGiftPointsRedeemed();
         if (pointsRedeemed > 0) {
             com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
                     .orElseThrow(() -> new AuthenticationException("User not found"));
@@ -407,16 +416,17 @@ public class OrderService {
             giftPointTransactionRepository.save(gpt);
         }
 
-        // 6. If previously CONFIRMED: refund payment and reverse earned points
+        // 6. If previously CONFIRMED: refund payment (set refundedAt) and reverse earned points
         Payment payment = null;
-        if (currentStatus == OrderStatus.CONFIRMED) {
+        if (previousStatus == OrderStatus.CONFIRMED) {
             payment = paymentRepository.findByOrderId(orderId).orElse(null);
             if (payment != null) {
                 payment.setStatus(PaymentStatus.REFUNDED);
+                payment.setRefundedAt(now);
                 paymentRepository.save(payment);
             }
 
-            int pointsEarned = order.getGiftPointsEarned();
+            int pointsEarned = savedOrder.getGiftPointsEarned();
             if (pointsEarned > 0) {
                 com.bookworm.ebookstore.entity.User user = userRepository.findByIdForUpdate(userId)
                         .orElseThrow(() -> new AuthenticationException("User not found"));

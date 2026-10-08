@@ -21,11 +21,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdForUpdate(@Param("id") Long id);
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("UPDATE User u SET u.giftPointsBalance = u.giftPointsBalance - :points WHERE u.id = :id AND u.giftPointsBalance >= :points")
     int deductGiftPointsGuarded(@Param("id") Long id, @Param("points") int points);
 
-    @Modifying
+    @Modifying(flushAutomatically = true)
     @Query("UPDATE User u SET u.giftPointsBalance = u.giftPointsBalance + :points WHERE u.id = :id")
     void addGiftPoints(@Param("id") Long id, @Param("points") int points);
 }

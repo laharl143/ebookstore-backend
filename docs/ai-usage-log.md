@@ -602,3 +602,44 @@ reviews, coupons, bestsellers, admin, shipping and Docker were moved to Deferred
 - Cancel does not save the CANCELLED status. `BookRepository.incrementStock` uses `@Modifying(clearAutomatically = true)`, which clears the order change before it is flushed. The order stays CONFIRMED with no `cancelled_at`, so a second cancel runs again and restores stock and points twice (ledger rows 4 to 7 for order BW-20261008-000002). `refunded_at` is also never set.
 
 **Review / changes by me:** _pending (decide how to fix the two bugs)_
+
+---
+
+## 30. Bug fixes: cancel persistence and declined card (IBM Bob)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** Fix two bugs found in the end-to-end run (entry 29): cancel does not persist the CANCELLED status, and a card ending 0002 is accepted instead of declined with 402.
+
+**AI output:**
+
+Bug 1 (cancel persistence):
+
+- Added `flushAutomatically = true` to `@Modifying` on `BookRepository.incrementStock` and `BookRepository.decrementStockGuarded` so pending order changes are flushed to the DB before the bulk UPDATE runs.
+- Added `flushAutomatically = true` (without `clearAutomatically`) to `UserRepository.addGiftPoints` and `deductGiftPointsGuarded` for the same reason.
+- Added `cancelOrderGuarded` to `OrderRepository`: a single `UPDATE orders SET status = CANCELLED ... WHERE id = :id AND user_id = :userId AND (status = PENDING_PAYMENT OR (status = CONFIRMED AND placed_at >= :cutoff))`. Returns 1 on success, 0 when no row matched.
+- Rewrote `OrderService.cancelOrder` to use the guarded UPDATE: if 0 rows changed, reads the current status and throws `CANCEL_WINDOW_EXPIRED` for CONFIRMED or `ORDER_NOT_CANCELLABLE` for anything else. Then reloads the now-CANCELLED order for the stock and points steps.
+- Cancel window now uses `placed_at` (not `paidAt`) as the reference time, matching spec 0003 value sourcing.
+- `payment.setRefundedAt(now)` is now called when a payment is set to REFUNDED.
+
+Bug 2 (declined card):
+
+- Created `FailedPaymentWriter` component with `@Transactional(propagation = REQUIRES_NEW)`: writes the FAILED payment row in its own independent transaction so it survives a rollback of the caller.
+- `OrderService.processPayment` now checks if the card last 4 digits are `0002`: calls `failedPaymentWriter.write(...)` to persist the FAILED row, then throws `PaymentDeclinedException(transactionId)`.
+- Created `PaymentDeclinedException` carrying the `transactionId`.
+- Added `handlePaymentDeclined` to `GlobalExceptionHandler`: returns 402 with `code: PAYMENT_DECLINED` and `transactionId` in the Problem body.
+
+Tests:
+
+- `cancelOrder_confirmedAfter48Hours_conflict`: updated to expect `CANCEL_WINDOW_EXPIRED` (was `ORDER_NOT_CANCELLABLE`) and to use `placed_at` only (not `paidAt`).
+- `cancelOrder_confirmed_fullStateCheck` (new): cancels a CONFIRMED order and verifies from the DB that status is CANCELLED, `cancelledAt` is set, payment is REFUNDED with `refundedAt` set, stock is restored to initial, and the ledger has no extra RESTORED row and at most one REVERSED row.
+- `cancelOrder_confirmedTwice_secondReturns409` (new): first cancel succeeds; second call returns `ORDER_NOT_CANCELLABLE` and leaves stock and ledger rows unchanged.
+- `processPayment_declinedCard_returns402` (new controller test): mocks `OrderService` throwing `PaymentDeclinedException`; verifies 402, `code: PAYMENT_DECLINED`, and `transactionId` in the body.
+- `mvn clean install`: 144 tests, 0 failures, BUILD SUCCESS.
+
+**Decisions / choices to review:**
+
+- `clearAutomatically = true` was intentionally omitted from the `UserRepository` bulk updates to avoid evicting the `Author` proxy from the first-level cache before `OrderMapper.toResponse` accesses it. `flushAutomatically = true` alone is sufficient because the user balance is always re-read via `findByIdForUpdate` before it is used.
+- The service test for the declined-card scenario verifies only the exception type and `transactionId`; it does not assert the FAILED row in the DB because the test-level `@Transactional` prevents the `REQUIRES_NEW` sub-transaction from seeing the uncommitted order row. The 402 HTTP response and `transactionId` in the body are covered by the controller test.
+
+**Review / changes by me:** _pending_

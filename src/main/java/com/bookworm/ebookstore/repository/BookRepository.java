@@ -15,11 +15,11 @@ import com.bookworm.ebookstore.entity.OrderStatus;
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
     List<Book> findByTitleAndIdNot(String title, Long id);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Book b SET b.stockQuantity = b.stockQuantity - :quantity WHERE b.id = :id AND b.stockQuantity >= :quantity")
     int decrementStockGuarded(@Param("id") Long id, @Param("quantity") int quantity);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE Book b SET b.stockQuantity = b.stockQuantity + :quantity WHERE b.id = :id")
     void incrementStock(@Param("id") Long id, @Param("quantity") int quantity);
 

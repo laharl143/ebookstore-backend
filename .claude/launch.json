@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bookworm-api",
+      "runtimeExecutable": "C:\\apache-maven-3.9.4\\bin\\mvn.cmd",
+      "runtimeArgs": ["-o", "spring-boot:run"],
+      "port": 8080,
+      "url": "http://localhost:8080"
+    }
+  ]
+}
