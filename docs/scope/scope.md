@@ -26,7 +26,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 9 | Checkout and order | Journey 2: Payment & purchase | done |
 | 10 | Simulated payment and confirmation | Journey 2: Payment & purchase | done |
 | 11 | Cancel within 48 hours | Journey 2: Payment & purchase | done |
-| 12 | Order history and Buy It Again | Journey 3: E-store Home | in-progress |
+| 12 | Order history and Buy It Again | Journey 3: E-store Home | done |
 | 13 | Recommendations | Journey 3: E-store Home | planned |
 | 14 | Run kit (Postgres setup, README, Insomnia) | Submission | planned |
 | 15 | Git branch and pull request | Submission | planned |
@@ -143,7 +143,7 @@ spec [0003](../specs/0003-api-contract/index.md) · code in `src/main/java/com/b
 
 ## Journey 3: E-store Home (slide steps 1 and 2)
 
-### 12. Order history and Buy It Again · in-progress
+### 12. Order history and Buy It Again · done
 Journey step 2: the user's past orders, newest first, with their items. Buy It Again copies a past order's items back into the basket (skipping anything out of stock).
 **Done when:** history shows only the caller's orders; Buy It Again fills the basket and reports any skipped books.
 - [x] Build it: `/develop order history and buy it again`
