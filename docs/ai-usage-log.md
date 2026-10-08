@@ -674,3 +674,16 @@ Tests:
 **Review / changes by me:** _pending_
 
 ---
+---
+
+## 32. Re-verify after the two Bob fix rounds (Claude Code)
+
+**Date:** 2026-10-08
+
+**Prompt (summary):** After Bob fixed the bugs from the first end to end run (commits `2acae77` and `7725f52`), I asked Claude Code to double check.
+
+**AI output:** `mvn clean install` passed with 146 tests and 0 failures. The live run on PostgreSQL went 40 of 40: the declined card returns 402 and keeps a FAILED row, the same order can then be paid, its detail and the order history load, cancel saves CANCELLED with `cancelled_at` and `refunded_at`, a second cancel returns 409, `copies_sold` rises after payment, and the gift points ledger adds up to the balance. Screenshots 04 to 07 in `docs/screenshots/` were retaken from this run.
+
+**What this shows about the AI workflow:** the first Bob fix passed its own tests but surfaced a new bug (two payment rows made order reads crash). Only the live run against the real database caught it, so running the app end to end after AI generated changes was worth it.
+
+**Review / changes by me:** _pending_
